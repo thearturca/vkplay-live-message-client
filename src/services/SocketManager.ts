@@ -1,7 +1,7 @@
 import WebSocket from "ws";
 import EventEmitter from "events";
-import { APITypes } from "../types/ApiTypes";
-import { TVKPLMessageClient } from "../types/libTypes";
+import { APITypes } from "../types/ApiTypes.js";
+import { TVKPLMessageClient } from "../types/libTypes.js";
 import { VKPLApiService } from "./VKPLApiService.js";
 
 export declare interface SocketManager

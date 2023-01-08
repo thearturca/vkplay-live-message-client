@@ -6,13 +6,13 @@ import EventEmitter from "events";
 import { SocketManager } from "./services/SocketManager.js";
 import { VKPLApiService } from "./services/VKPLApiService.js";
 
-export declare interface VKPLMessageClient
+declare interface VKPLMessageClient
 {
   on(event: 'message', listener: TVKPLMessageClient.MessageEvent): this;
   on(event: string, listener: Function): this;
 }
 
-export class VKPLMessageClient extends EventEmitter
+class VKPLMessageClient extends EventEmitter
 {
   private wsServerUrl: string = "wss://pubsub.vkplay.live/connection/websocket";
   private authToken: string;
@@ -91,3 +91,6 @@ export class VKPLMessageClient extends EventEmitter
     await this.messageService.sendMessage(message, channel, mentionUserId)
   }
 }
+
+
+export default VKPLMessageClient;

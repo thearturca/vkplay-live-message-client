@@ -16,13 +16,15 @@
         "esModuleInterop": true,
         "module": "Node16",
         "moduleResolution": "Node16",
-        "outDir": "./build",
+        "outDir": "./lib",
       }
     },
     "compilerOptions": {
       // typescript options here
       "esModuleInterop": true,
+      "declaration": true,
       "module": "Node16",
+      "moduleResolution": "Node16",
       "noImplicitAny": false,
       "noUnusedLocals": false,
       "removeComments": true,
@@ -35,8 +37,8 @@
       "sourceMap": true,
       "allowJs": true,
       "checkJs": false,
-      "outDir": "./build",
+      "outDir": "./lib",
       "lib": ["ES2020"],
-      "types": ["node"]
+      "types": ["node", "ws"]
     }
   }

@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import fetch from "node-fetch";
-import { APITypes } from "../types/ApiTypes";
+import { APITypes } from "../types/ApiTypes.js";
 
 export class VKPLApiService
 {

@@ -1,6 +1,6 @@
 import fetch from "node-fetch";
-import { APITypes } from "../types/ApiTypes";
-import { TVKPLMessageClient } from "../types/libTypes";
+import { APITypes } from "../types/ApiTypes.js";
+import { TVKPLMessageClient } from "../types/libTypes.js";
 
 export class MessageService
 {
