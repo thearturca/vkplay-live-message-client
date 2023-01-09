@@ -1,6 +1,8 @@
 import fetch from "node-fetch";
+import VKPLMessageClient from "../index.js";
 import { APITypes } from "../types/ApiTypes.js";
 import { TVKPLMessageClient } from "../types/libTypes.js";
+import { VKPLApiService } from "./VKPLApiService.js";
 
 export class MessageService
 {
@@ -13,17 +15,12 @@ export class MessageService
             try
             {
                   const serializedMessage = { data: JSON.stringify(this.serializeMessage(message, mentionUser)) };
-                  await fetch(`https://api.vkplay.live/v1/blog/${channel}/public_video_stream/chat`, 
-                  { 
-                        method: "POST", 
-                        headers: 
-                        {
-                              Authorization: `Bearer ${this.authToken}`, 
-                              "Content-type": "application/x-www-form-urlencoded"
-                        }, 
-                        body: new URLSearchParams(serializedMessage).toString()
-                  })
-                  // .then(res => res.json()).then(console.log);
+                  await VKPLApiService.sendMessage(channel, this.authToken, new URLSearchParams(serializedMessage).toString())
+                  .then((res) => 
+                  {
+                        if (VKPLMessageClient.debugLog)
+                              console.warn("[debug:send-message] ", JSON.stringify(res, null, 4));
+                  });
             }
             catch (e)
             {
@@ -83,24 +80,39 @@ export class MessageService
 
       public static deserializeMessage(message: APITypes.TMessageBlock[]): TVKPLMessageClient.DeserializedMessage
       {
-            let deserializedMessage: string = "";
-            const emotesInMessage: APITypes.TMessageBlockSmile[] = [];
+            const deserializedMessage: TVKPLMessageClient.DeserializedMessage = { smiles: [], text: "", mention: undefined };
+
             for (const block of message)
             switch (block.type)
             {
+                  case 'mention':
+                        const blockAsBlockMention: APITypes.TMessageBlockMention = block as APITypes.TMessageBlockMention;
+                        deserializedMessage.mention = 
+                        { 
+                              displayName: blockAsBlockMention.displayName, 
+                              name: blockAsBlockMention.name, 
+                              nick: blockAsBlockMention.nick, 
+                              userId: blockAsBlockMention.id 
+                        };
+
+                        if ((block as APITypes.TMessageBlockMention).displayName)
+                              deserializedMessage.text = deserializedMessage.text.trim() + " " + blockAsBlockMention.displayName + ", ";
+
+                        break;
+
                   case 'text':
-                        deserializedMessage = deserializedMessage.trim() + " " + (block.content && block.content.length > 0 ? JSON.parse(block.content)[0] : "");
+                        deserializedMessage.text = deserializedMessage.text.trim() + " " + (block.content && block.content.length > 0 ? JSON.parse(block.content)[0] : "");
                         break;
 
                   case 'smile':
-                        emotesInMessage.push(block as APITypes.TMessageBlockSmile);
-                        deserializedMessage = deserializedMessage.trim() + " " + (block as APITypes.TMessageBlockSmile).name
+                        deserializedMessage.smiles.push(block as APITypes.TMessageBlockSmile);
+                        deserializedMessage.text = deserializedMessage.text.trim() + " " + (block as APITypes.TMessageBlockSmile).name
                         break;
 
                   default:
                         break; 
             };
 
-            return {text: deserializedMessage.trim(), smiles: emotesInMessage};
+            return deserializedMessage;
       }
 }

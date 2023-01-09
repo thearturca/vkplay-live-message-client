@@ -1,8 +1,8 @@
+import EventEmitter from "events";
 import { APITypes } from "./types/ApiTypes.js";
 import { MessageService } from "./services/MessageService.js";
 import { TVKPLMessageClient } from "./types/libTypes.js";
 import { MapApiToLibService } from "./services/MapApiToLibService.js";
-import EventEmitter from "events";
 import { SocketManager } from "./services/SocketManager.js";
 import { VKPLApiService } from "./services/VKPLApiService.js";
 
@@ -16,6 +16,7 @@ class VKPLMessageClient extends EventEmitter
 {
   private wsServerUrl: string = "wss://pubsub.vkplay.live/connection/websocket";
   private authToken: string;
+  public static debugLog: boolean;
 
   private socketManager: SocketManager;
   private messageService: MessageService;
@@ -25,18 +26,19 @@ class VKPLMessageClient extends EventEmitter
 
   public availableSmiles: Map<string, string> = new Map();
 
-
   constructor(config: TVKPLMessageClient.Config)
   {
     super();
 
+    VKPLMessageClient.debugLog = config.debugLog ?? false;
     this.authToken = config.authToken ?? "";
     this._channels = config.channels;
     this.wsServerUrl = config.wsServer ?? this.wsServerUrl;
     this.socketManager = new SocketManager(this.wsServerUrl);
-    this.socketManager.connect();
 
     this.socketManager.on("message", (message) => this.onMessage(message));
+    this.socketManager.on("reconnect", () => this.onReconnect());
+    this.socketManager.on("open", () => this.onOpen());
   }
 
   private onMessage(message: APITypes.TNewMessage): void
@@ -56,9 +58,30 @@ class VKPLMessageClient extends EventEmitter
     console.log(`[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`);
 }
 
-  public findChannelById(name: string): TVKPLMessageClient.Channel | undefined
+  public findChannelById(id: string): TVKPLMessageClient.Channel | undefined
   {
-    return this.channels.find((channel => channel.publicWebSocketChannel === name));
+    return this.channels.find((channel => channel.publicWebSocketChannel === id));
+  }
+  public findChannelByName(name: string): TVKPLMessageClient.Channel | undefined
+  {
+    return this.channels.find((channel => channel.blogUrl === name));
+  }
+
+  private connectToChat(): void
+  {
+    for (const channel of this.channels)
+      this.socketManager.connectToChat(channel);
+  }
+
+  private async onOpen(): Promise<void>
+  {
+    this.connectToChat();
+  }
+
+  private async onReconnect(): Promise<void>
+  {
+    console.log("[reconnect] Connecting to websocket");
+    this.socketManager.connect();
   }
 
   public async connect(): Promise<void>
@@ -73,6 +96,9 @@ class VKPLMessageClient extends EventEmitter
     {
       const smilesSet: APITypes.TSmilesResponse = await VKPLApiService.getSmilesSet(this.authToken, this.channels[0].blogUrl);
 
+      if (VKPLMessageClient.debugLog)
+        console.warn("[debug:chat] Get smiles set", JSON.stringify(smilesSet, null, 5))
+
       for (const set of smilesSet.data.sets)
         for (const smile of set.smiles)
           this.availableSmiles.set(smile.name, smile.id);
@@ -80,10 +106,9 @@ class VKPLMessageClient extends EventEmitter
       this.messageService = new MessageService(this.authToken, this.availableSmiles);
     }
     else
-      console.error("[chat] Cannot get list of smiles because of no auth token nor channels provided");
+      throw new Error("[chat] Cannot get list of smiles because of no auth token nor channels provided");
 
-    for (const channel of this.channels)
-      this.socketManager.connectToChat(channel);
+    this.socketManager.connect();
   }
 
   public async sendMessage(message: string, channel: string, mentionUserId?: number): Promise<void>
@@ -91,6 +116,5 @@ class VKPLMessageClient extends EventEmitter
     await this.messageService.sendMessage(message, channel, mentionUserId)
   }
 }
-
 
 export default VKPLMessageClient;

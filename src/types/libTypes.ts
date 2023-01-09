@@ -7,6 +7,7 @@ export namespace TVKPLMessageClient
             channels: string[],
             authToken: string,
             wsServer?: string,
+            debugLog?: boolean
       };
 
       export type Channel = 
@@ -27,7 +28,9 @@ export namespace TVKPLMessageClient
             isPrivate: boolean
       };
 
-      export type DeserializedMessage = { text: string, smiles: Smile[] };
+      export type DeserializedMessage = { text: string, smiles: Smile[], mention?:  Mention};
+
+      export type Mention = { userId: number, name?: string, displayName?: string, nick?: string };
 
       export type User =
       {

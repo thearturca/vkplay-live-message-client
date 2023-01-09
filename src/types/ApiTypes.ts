@@ -46,6 +46,9 @@ export namespace APITypes
     type: 'text' | string,
   };
   export type TMessageBlockMention = {
+    displayName?: string,
+    name?: string,
+    nick?: string,
     id: number,
     type: 'mention',
   };
@@ -66,6 +69,17 @@ export namespace APITypes
   } & TSmile;
   
   export type TMessageBlock = TMessageBlockText | TMessageBlockSmile | TMessageBlockMention;
+
+  export type TMessageResponse = 
+  {
+      author: TAuthor,
+      createdAt: number,
+      data: TMessageBlock[],
+      id: number,
+      style: unknown[],
+      user: TUser,
+      isPrivate: boolean
+  };
   
   export type TNewMessage = 
   { 
@@ -76,16 +90,7 @@ export namespace APITypes
       {
         data:
         {
-          data: 
-          {
-            author: TAuthor,
-            createdAt: number,
-            data: TMessageBlock[],
-            id: number,
-            style: unknown[],
-            user: TUser,
-            isPrivate: boolean
-          },
+          data: TMessageResponse,
           type: 'message' | string
         },
         offset: number

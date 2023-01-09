@@ -3,10 +3,13 @@ import EventEmitter from "events";
 import { APITypes } from "../types/ApiTypes.js";
 import { TVKPLMessageClient } from "../types/libTypes.js";
 import { VKPLApiService } from "./VKPLApiService.js";
+import VKPLMessageClient from "../index.js";
 
 export declare interface SocketManager
 {
   on(event: 'message', listener: (newMessage: APITypes.TNewMessage) => void): this;
+  on(event: 'reconnect', listener: () => void): this;
+  on(event: 'open', listener: () => void): this;
   on(event: string, listener: Function): this;
 }
 
@@ -37,6 +40,9 @@ export class SocketManager extends EventEmitter
 
     const wsToken = await VKPLApiService.getWebSocketToken();
 
+    if (VKPLMessageClient.debugLog)
+      console.warn("[debug:websocket] get websocket token", JSON.stringify(wsToken, null, 5))
+
     const payload: vkplWsPayload = 
     {
       "params": 
@@ -47,7 +53,11 @@ export class SocketManager extends EventEmitter
       "id": 0
     }
 
-    await this.invokeMethod(payload, () => console.log("[open] Connected"))
+    await this.invokeMethod(payload, () => 
+    {
+      console.log("[open] Connected");
+      this.emit("open");
+    });
   }
 
   private checkMethod(methodId: number): void
@@ -72,7 +82,10 @@ export class SocketManager extends EventEmitter
     {
       this.currentMethodId += 1;
       payload.id = this.currentMethodId;
-      console.log("[debug] invoking method ", payload)
+
+      if (VKPLMessageClient.debugLog)
+        console.warn("[debug:websocket] invoking vkplay live websocket method", JSON.stringify(payload, null, 4));
+
       this.methods.push({ id: payload.id, callbBack, callBackParams });
       this.socket.send(JSON.stringify(payload), (error) =>
       {
@@ -95,22 +108,24 @@ export class SocketManager extends EventEmitter
         },
         "id":0
       };
-
-      this.invokeMethod(connectToChatPaylod, () => console.log(`[chat:${channel.blogUrl}] Connected to channel: ${channel.blogUrl}`))
+      console.log(`[chat:${channel.blogUrl}] Connecting to channel chat...`)
+      this.invokeMethod(connectToChatPaylod, () => console.log(`[chat:${channel.blogUrl}] Connected to channel chat`))
   }
 
   public onMessage(event: WebSocket.MessageEvent): void
   {
     const data = JSON.parse(event.data as string);
-    console.log("[debug] ", data);
 
-      if (data.id)
-            this.checkMethod(data.id);
+    if (VKPLMessageClient.debugLog)
+      console.warn("[debug:websocket] new message", JSON.stringify(data, null, 4));
 
-      const newMessage: APITypes.TNewMessage = data as APITypes.TNewMessage;
+    if (data.id)
+          this.checkMethod(data.id);
 
-      if (newMessage.result.data && newMessage.result.data.data.type === "message")
-            this.emit("message", newMessage);
+    const newMessage: APITypes.TNewMessage = data as APITypes.TNewMessage;
+
+    if (newMessage.result.data && newMessage.result.data.data.type === "message")
+          this.emit("message", newMessage);
   }
 
   public onClose(event: WebSocket.CloseEvent): void
@@ -118,7 +133,11 @@ export class SocketManager extends EventEmitter
     if (event.wasClean) 
       console.log(`[close] Connection closed clean, code=${event.code} reason=${event.reason}`);
     else 
+    {
       console.error('[close] Connection interrupted');
+      console.log('[close] Trying to reconnect...');
+      this.emit("reconnect");
+    }
   }
 
   public onError(error: WebSocket.ErrorEvent): void
