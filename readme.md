@@ -11,6 +11,10 @@
 
 `Discord для вопросов: thearturca#1569`
 
+### Установка
+
+`npm i vklive-message-client`
+
 ### Пример использования
 
 ```TS
