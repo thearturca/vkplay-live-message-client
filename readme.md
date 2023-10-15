@@ -9,11 +9,13 @@
 ### Токен
 Для отправки сообщений нужно указать токен vkplay.live. Так как ещё нет легального удобного способа получить токен, его нужно взять из localStorage вашего браузера, если вы уже залогинены. Находиться в поле `auth`. Лучше всего создать новый аккаунт для бота. Если вы знаете, как достать токен, сообщите мне в discord. 
 
-`Discord для вопросов: thearturca#1569`
+`Discord для вопросов: thearturca`
 
 ### Установка
 
-`npm i vklive-message-client`
+```bash
+npm i vklive-message-client
+```
 
 ### Пример использования
 
@@ -22,8 +24,7 @@ const client = new VKPLMessageClient({ authToken: authToken, channels: [channel]
 await client.connect();
 await client.sendMessage(channel, "Connected to chat!");
 
-client.on("message", async (context) =>
-{
+client.on("message", async (context) =>{
       if (context.message.text.startsWith("!command"))
             await context.sendMessage("Hello World");
 });
