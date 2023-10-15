@@ -1,45 +1,45 @@
 {
-  "name": "vklive-message-client",
-  "version": "1.0.3",
-  "description": "TypeScript implementation of vkplay live stream chat client",
-  "main": "./lib/index.js",
-  "exports": "./lib/index.js",
-  "type": "module",
-  "scripts": {
-    "start": "ts-node src/index.ts",
-    "test": "ts-node src/test.ts",
-    "build": "tsc",
-    "nodemon": "nodemon src/index.ts"
-  },
-  "keywords": [
-    "vkplay",
-    "vkplay live",
-    "vk chat client",
-    "vkplay live chat client",
-    "chat",
-    "message",
-    "messaging",
-    "interface",
-    "bot"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/thearturca/vkplay-live-message-client"
-  },
-  "author": "thearturca",
-  "license": "MIT",
-  "files": [
-    "lib/**/*"
-  ],
-  "dependencies": {
-    "node-fetch": "^3.3.0",
-    "ws": "^8.11.0"
-  },
-  "devDependencies": {
-    "@types/node": "^18.11.18",
-    "@types/ws": "^8.5.4",
-    "nodemon": "^3.0.1",
-    "ts-node": "^10.9.1",
-    "typescript": "^5.2.2"
-  }
+      "name": "vklive-message-client",
+      "version": "1.0.3",
+      "description": "TypeScript implementation of vkplay live stream chat client",
+      "main": "./lib/index.js",
+      "exports": "./lib/index.js",
+      "type": "module",
+      "scripts": {
+            "start": "ts-node src/index.ts",
+            "test": "ts-node src/test.ts",
+            "build": "tsc",
+            "nodemon": "nodemon src/index.ts"
+      },
+      "keywords": [
+            "vkplay",
+            "vkplay live",
+            "vk chat client",
+            "vkplay live chat client",
+            "chat",
+            "message",
+            "messaging",
+            "interface",
+            "bot"
+      ],
+      "repository": {
+            "type": "git",
+            "url": "https://github.com/thearturca/vkplay-live-message-client"
+      },
+      "author": "thearturca",
+      "license": "MIT",
+      "files": [
+            "lib/**/*"
+      ],
+      "dependencies": {
+            "node-fetch": "^3.3.0",
+            "ws": "^8.11.0"
+      },
+      "devDependencies": {
+            "@types/node": "^18.11.18",
+            "@types/ws": "^8.5.4",
+            "nodemon": "^3.0.1",
+            "ts-node": "^10.9.1",
+            "typescript": "^5.2.2"
+      }
 }
