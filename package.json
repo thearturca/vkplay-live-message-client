@@ -1,6 +1,6 @@
 {
       "name": "vklive-message-client",
-      "version": "1.0.3",
+      "version": "1.0.4",
       "description": "TypeScript implementation of vkplay live stream chat client",
       "main": "./lib/index.js",
       "exports": "./lib/index.js",

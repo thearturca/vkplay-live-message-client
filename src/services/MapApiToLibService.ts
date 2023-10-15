@@ -2,20 +2,17 @@ import { APITypes } from "../types/ApiTypes.js";
 import { TVKPLMessageClient } from "../types/libTypes.js";
 import { MessageService } from "./MessageService.js";
 
-export class MapApiToLibService
-{
-      public static mapTBlogResponseToChannel(blog: APITypes.TBlogResponse): TVKPLMessageClient.Channel
-      {
+export class MapApiToLib {
+      public static mapTBlogResponseToChannel(blog: APITypes.TBlogResponse): TVKPLMessageClient.Channel {
             return { blogUrl: blog.blogUrl, id: blog.owner.id, name: blog.owner.name, publicWebSocketChannel: blog.publicWebSocketChannel.split(":")[1] }
       }
 
-      public static mapTNewMessageToChatMessage(newMessage: APITypes.TNewMessage, channel: TVKPLMessageClient.Channel): TVKPLMessageClient.ChatMessage
-      {
-            const newMessageAuthor: APITypes.TAuthor = newMessage.result.data.data.data.author;
-            const newMessageUser: APITypes.TUser = newMessage.result.data.data.data.user;
+      public static mapTNewMessageToChatMessage(newMessage: APITypes.TNewMessage, channel: TVKPLMessageClient.Channel): TVKPLMessageClient.ChatMessage {
+            const newMessageAuthor: APITypes.TAuthor = newMessage.data.data.data.author;
+            const newMessageUser: APITypes.TUser = newMessage.data.data.data.user;
             return {
                   channel,
-                  user: 
+                  user:
                   {
                         badges: newMessageAuthor.badges,
                         avatarUrl: newMessageUser.avatarUrl,
@@ -26,10 +23,10 @@ export class MapApiToLibService
                         name: newMessageUser.name,
                         nick: newMessageUser.nick
                   },
-                  createdAt: newMessage.result.data.data.data.createdAt,
-                  id: newMessage.result.data.data.data.id,
-                  isPrivate: newMessage.result.data.data.data.isPrivate,
-                  message: MessageService.deserializeMessage(newMessage.result.data.data.data.data)
+                  createdAt: newMessage.data.data.data.createdAt,
+                  id: newMessage.data.data.data.id,
+                  isPrivate: newMessage.data.data.data.isPrivate,
+                  message: MessageService.deserializeMessage(newMessage.data.data.data.data)
             };
       }
 }
