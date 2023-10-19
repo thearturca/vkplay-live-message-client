@@ -1,6 +1,12 @@
 
 export namespace APITypes {
       export type TTokenResponse = { token?: string }
+
+      export type AuthResponse = {
+            accessToken: string,
+            refreshToken: string,
+            expiresAt: number
+      }
       export type TBlogResponse = {
             publicWebSocketChannel: string,
             owner: TUser,

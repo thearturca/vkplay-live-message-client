@@ -1,25 +1,26 @@
 
-export namespace TVKPLMessageClient
-{
+export namespace TVKPLMessageClient {
       export type Smile = { id: string, name: string }
-      export type Config = 
-      {
+      export type Config = {
             channels: string[],
-            authToken: string,
+            auth: {
+                  token: string,
+            } | {
+                  login: string,
+                  password: string
+            },
             wsServer?: string,
             debugLog?: boolean
       };
 
-      export type Channel = 
-      {
+      export type Channel = {
             blogUrl: string,
             publicWebSocketChannel: string,
             name: string,
             id: number
       };
 
-      export type ChatMessage =
-      {
+      export type ChatMessage = {
             message: DeserializedMessage,
             user: User,
             channel: Channel,
@@ -28,12 +29,11 @@ export namespace TVKPLMessageClient
             isPrivate: boolean
       };
 
-      export type DeserializedMessage = { text: string, smiles: Smile[], mention?:  Mention};
+      export type DeserializedMessage = { text: string, smiles: Smile[], mention?: Mention };
 
       export type Mention = { userId: number, name?: string, displayName?: string, nick?: string };
 
-      export type User =
-      {
+      export type User = {
             id: number,
             isChatModerator: boolean,
             badges: Badge[],
@@ -44,14 +44,13 @@ export namespace TVKPLMessageClient
             avatarUrl: string,
       }
 
-      export type Badge = 
-      { 
-            achievement: { name: string, type: string }, 
-            id: string, 
-            isCreated: boolean, 
-            largeUrl: string, 
-            mediumUrl: string, 
-            name: string, 
+      export type Badge = {
+            achievement: { name: string, type: string },
+            id: string,
+            isCreated: boolean,
+            largeUrl: string,
+            mediumUrl: string,
+            name: string,
             smallUrl: string
       };
 
@@ -59,5 +58,5 @@ export namespace TVKPLMessageClient
 
       export type MessageEventContext = ChatMessage & { sendMessage(text: string): Promise<void>, reply(text: string): Promise<void> };
 
-      
+
 }

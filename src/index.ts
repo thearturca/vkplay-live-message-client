@@ -14,6 +14,10 @@ declare interface VKPLMessageClient {
 class VKPLMessageClient extends EventEmitter {
       private wsServerUrl: string = "wss://pubsub.vkplay.live/connection/websocket";
       private authToken: string;
+      private credentials?: {
+            login: string,
+            password: string,
+      };
       public static debugLog: boolean;
 
       private socketManager: SocketManager;
@@ -28,7 +32,11 @@ class VKPLMessageClient extends EventEmitter {
             super();
 
             VKPLMessageClient.debugLog = config.debugLog ?? false;
-            this.authToken = config.authToken ?? "";
+            this.authToken = "token" in config.auth ? config.auth.token : "";
+
+            if ("login" in config.auth)
+                  this.credentials = { ...config.auth };
+
             this._channels = config.channels;
             this.wsServerUrl = config.wsServer ?? this.wsServerUrl;
             this.socketManager = new SocketManager(this.wsServerUrl);
@@ -69,7 +77,21 @@ class VKPLMessageClient extends EventEmitter {
             this.connectToChat();
       }
 
+      private async getToken(): Promise<void> {
+            if (!this.credentials)
+                  return;
+
+            const token = await VKPLApiService.getToken(this.credentials?.login ?? "", this.credentials?.password ?? "");
+
+            if (token.accessToken)
+                  this.authToken = token.accessToken;
+      }
+
       public async connect(): Promise<void> {
+            if (!this.authToken && this.credentials) {
+                  await this.getToken();
+            }
+
             for (const channelName of this._channels) {
                   const channel: TVKPLMessageClient.Channel = MapApiToLib.mapTBlogResponseToChannel(await VKPLApiService.getBlog(channelName));
                   this.channels.push(channel);
