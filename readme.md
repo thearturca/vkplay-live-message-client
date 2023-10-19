@@ -24,7 +24,8 @@ npm i vklive-message-client
 ```TS            
 const authToken: string = process.env.VKPL_OAUTH ?? "";
 
-const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });await client.connect();
+const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+await client.connect();
 await client.sendMessage(channel, "Connected to chat!");
 
 client.on("message", async (context) =>{
