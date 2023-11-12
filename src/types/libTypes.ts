@@ -20,7 +20,15 @@ export namespace TVKPLMessageClient {
             id: number
       };
 
+      export type ParentMessage = {
+            message: DeserializedMessage,
+            user: User,
+            id: number,
+            isPrivate: boolean
+      };
+
       export type ChatMessage = {
+            parent?: ParentMessage,
             message: DeserializedMessage,
             user: User,
             channel: Channel,
@@ -29,9 +37,18 @@ export namespace TVKPLMessageClient {
             isPrivate: boolean
       };
 
-      export type DeserializedMessage = { text: string, smiles: Smile[], mention?: Mention };
+      export type DeserializedMessage = {
+            text: string,
+            smiles: Smile[],
+            mentions: Mention[],
+      };
 
-      export type Mention = { userId: number, name?: string, displayName?: string, nick?: string };
+      export type Mention = {
+            userId: number,
+            name?: string,
+            displayName?: string,
+            nick?: string
+      };
 
       export type User = {
             id: number,
@@ -56,7 +73,11 @@ export namespace TVKPLMessageClient {
 
       export type MessageEvent = (messageContext: MessageEventContext) => void;
 
-      export type MessageEventContext = ChatMessage & { sendMessage(text: string): Promise<void>, reply(text: string): Promise<void> };
+      export type MessageEventContext = ChatMessage & {
+            sendMessage(text: string, mentionUsers?: number[]): Promise<void>,
+            reply(text: string, mentionUsers?: number[]): Promise<void>
+            replyToThread(text: string, mentionUsers?: number[]): Promise<void>,
+      };
 
 
 }

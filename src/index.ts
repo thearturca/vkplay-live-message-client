@@ -55,8 +55,9 @@ class VKPLMessageClient extends EventEmitter {
             this.emit("message",
                   {
                         ...mappedMessage,
-                        sendMessage: async (text: string) => this.sendMessage(text, mappedMessage.channel.blogUrl),
-                        reply: async (text: string) => this.sendMessage(text, mappedMessage.channel.blogUrl, mappedMessage.user.id)
+                        sendMessage: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers),
+                        reply: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers ? [...mentionUsers, mappedMessage.user.id] : [mappedMessage.user.id]),
+                        replyToThread: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers, mappedMessage.id),
                   });
             console.log(`[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`);
       }
@@ -116,8 +117,8 @@ class VKPLMessageClient extends EventEmitter {
             await this.connectToChat();
       }
 
-      public async sendMessage(message: string, channel: string, mentionUserId?: number): Promise<void> {
-            await this.messageService.sendMessage(message, channel, mentionUserId)
+      public async sendMessage(message: string, channel: string, mentionUserId?: number[], threadId?: number): Promise<void> {
+            await this.messageService.sendMessage(message, channel, mentionUserId, threadId);
       }
 }
 

@@ -7,10 +7,16 @@ export class MessageService {
       constructor(private authToken: string, public smiles: Map<string, string>) {
       }
 
-      public async sendMessage(message: string, channel: string, mentionUser?: number): Promise<void> {
+      public async sendMessage(message: string, channel: string, mentionUsers?: number[], threadId?: number): Promise<void> {
             try {
-                  const serializedMessage = { data: JSON.stringify(this.serializeMessage(message, mentionUser)) };
-                  const res = await VKPLApiService.sendMessage(channel, this.authToken, new URLSearchParams(serializedMessage).toString())
+                  const serializedMessage = { data: JSON.stringify(this.serializeMessage(message, mentionUsers)) };
+                  const body = new URLSearchParams(serializedMessage);
+
+                  if (threadId)
+                        body.set("reply_to_id", threadId.toString());
+
+                  const res = await VKPLApiService.sendMessage(channel, this.authToken, body.toString());
+
                   if (VKPLMessageClient.debugLog)
                         console.warn("[debug:send-message] ", JSON.stringify(res, null, 4));
             }
@@ -19,14 +25,16 @@ export class MessageService {
             }
       }
 
-      public serializeMessage(message: string, mentionId?: number): APITypes.TMessageBlock[] {
+      public serializeMessage(message: string, mentionIds?: number[]): APITypes.TMessageBlock[] {
             const serializedMessage: APITypes.TMessageBlock[] = [];
 
-            if (mentionId)
-                  serializedMessage.push(...this.getMentionBlock(mentionId));
+            if (mentionIds)
+                  for (const mentionId of mentionIds)
+                        serializedMessage.push(...this.getMentionBlock(mentionId));
 
             const splitedMessage: string[] = message.split(" ");
             let textStack: string = "";
+
             for (const word of splitedMessage)
                   if (this.smiles.has(word)) {
                         serializedMessage.push(...this.getTextBlock(textStack));
@@ -34,8 +42,9 @@ export class MessageService {
 
                         serializedMessage.push(...this.getSmileBlock(word, this.smiles.get(word)!));
                   }
-                  else
+                  else {
                         textStack += word + " ";
+                  }
 
             if (textStack != "")
                   serializedMessage.push(...this.getTextBlock(textStack));
@@ -45,9 +54,9 @@ export class MessageService {
 
       private getSmileBlock(word: string, smileId: string): APITypes.TMessageBlock[] {
             return [
-                  { type: "text", content: "", modificator: "BLOCK_END" },
+                  this.getBlockEnd(),
                   { type: "smile", id: smileId, name: word },
-                  { type: "text", content: "", modificator: "BLOCK_END" },
+                  this.getBlockEnd(),
             ];
       }
 
@@ -55,8 +64,8 @@ export class MessageService {
             return [{ type: "text", content: JSON.stringify([text, "unstyled", []]), modificator: "" }];
       }
 
-      private getBlockEnd(): APITypes.TMessageBlock[] {
-            return [{ type: "text", content: "", modificator: "BLOCK_END" }];
+      private getBlockEnd(): APITypes.TMessageBlock {
+            return { type: "text", content: "", modificator: "BLOCK_END" };
       }
 
       private getMentionBlock(userId: number): APITypes.TMessageBlockMention[] {
@@ -64,21 +73,25 @@ export class MessageService {
       }
 
       public static deserializeMessage(message: APITypes.TMessageBlock[]): TVKPLMessageClient.DeserializedMessage {
-            const deserializedMessage: TVKPLMessageClient.DeserializedMessage = { smiles: [], text: "", mention: undefined };
+            const deserializedMessage: TVKPLMessageClient.DeserializedMessage = {
+                  smiles: [],
+                  text: "",
+                  mentions: [],
+            };
 
             for (const block of message)
                   switch (block.type) {
                         case 'mention':
                               const blockAsBlockMention: APITypes.TMessageBlockMention = block as APITypes.TMessageBlockMention;
-                              deserializedMessage.mention = {
+                              deserializedMessage.mentions.push({
                                     displayName: blockAsBlockMention.displayName,
                                     name: blockAsBlockMention.name,
                                     nick: blockAsBlockMention.nick,
                                     userId: blockAsBlockMention.id
-                              };
+                              });
 
                               if ((block as APITypes.TMessageBlockMention).displayName)
-                                    deserializedMessage.text = deserializedMessage.text.trim() + " " + blockAsBlockMention.displayName + ", ";
+                                    deserializedMessage.text = deserializedMessage.text.trim() + " " + blockAsBlockMention.displayName;
 
                               break;
 
@@ -94,6 +107,8 @@ export class MessageService {
                         default:
                               break;
                   };
+
+            deserializedMessage.text = deserializedMessage.text.trim();
 
             return deserializedMessage;
       }

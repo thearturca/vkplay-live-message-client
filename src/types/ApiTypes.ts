@@ -74,6 +74,14 @@ export namespace APITypes {
 
       export type TMessageBlock = TMessageBlockText | TMessageBlockSmile | TMessageBlockMention;
 
+      export type TParentMessage = {
+            isPrivate: boolean,
+            data: TMessageBlock[],
+            createdAt: number,
+            author: TAuthor,
+            id: number,
+      }
+
       export type TMessageResponse = {
             author: TAuthor,
             createdAt: number,
@@ -82,6 +90,7 @@ export namespace APITypes {
             style: unknown[],
             user: TUser,
             isPrivate: boolean
+            parent?: TParentMessage,
       };
 
       export type TNewMessage = {
