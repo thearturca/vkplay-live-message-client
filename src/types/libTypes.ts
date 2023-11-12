@@ -1,3 +1,4 @@
+import { APITypes } from "./ApiTypes.js";
 
 export namespace TVKPLMessageClient {
       export type Smile = { id: string, name: string }
@@ -77,9 +78,9 @@ export namespace TVKPLMessageClient {
       export type MessageEvent = (messageContext: MessageEventContext) => void;
 
       export type MessageEventContext = ChatMessage & {
-            sendMessage(text: string, mentionUsers?: number[]): Promise<void>,
-            reply(text: string, mentionUsers?: number[]): Promise<void>
-            replyToThread(text: string, mentionUsers?: number[]): Promise<void>,
+            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
+            reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
+            replyToThread(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
       };
 
 

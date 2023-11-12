@@ -7,22 +7,19 @@ export class MessageService {
       constructor(private authToken: string, public smiles: Map<string, string>) {
       }
 
-      public async sendMessage(message: string, channel: string, mentionUsers?: number[], threadId?: number): Promise<void> {
-            try {
-                  const serializedMessage = { data: JSON.stringify(this.serializeMessage(message, mentionUsers)) };
-                  const body = new URLSearchParams(serializedMessage);
+      public async sendMessage(message: string, channel: string, mentionUsers?: number[], threadId?: number): Promise<APITypes.TMessageResponse> {
+            const serializedMessage = { data: JSON.stringify(this.serializeMessage(message, mentionUsers)) };
+            const body = new URLSearchParams(serializedMessage);
 
-                  if (threadId)
-                        body.set("reply_to_id", threadId.toString());
+            if (threadId)
+                  body.set("reply_to_id", threadId.toString());
 
-                  const res = await VKPLApiService.sendMessage(channel, this.authToken, body.toString());
+            const res = await VKPLApiService.sendMessage(channel, this.authToken, body.toString());
 
-                  if (VKPLMessageClient.debugLog)
-                        console.warn("[debug:send-message] ", JSON.stringify(res, null, 4));
-            }
-            catch (e) {
-                  console.error(e);
-            }
+            if (VKPLMessageClient.debugLog)
+                  console.warn("[debug:send-message] ", JSON.stringify(res, null, 4));
+
+            return res;
       }
 
       public serializeMessage(message: string, mentionIds?: number[]): APITypes.TMessageBlock[] {

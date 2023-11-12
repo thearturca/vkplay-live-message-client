@@ -7,10 +7,33 @@ import { SocketManager } from "./services/SocketManager.js";
 import { VKPLApiService } from "./services/VKPLApiService.js";
 
 declare interface VKPLMessageClient {
+      /**
+       * Событие о новом сообщении в каналах трансляции 
+       */
       on(event: 'message', listener: TVKPLMessageClient.MessageEvent): this;
       on(event: string, listener: Function): this;
 }
 
+/**
+ * @property {string} channels - Список каналов
+ * @property {Map} availableSmiles - Список доступных смайлов для акаунта бота
+ *
+ * Клиента для чата VKPlay Live. Позволяет получать и отправлять сообщения в чат трансляции.
+ * Поддерживает несколько каналов, отправку сообщений по каждому из них, добавление упоминаний пользователей, отправку в ветку сообщений.
+ *
+ * @example
+ * const login: string = process.env.VKPL_LOGIN ?? "";
+ * const password: string = process.env.VKPL_PASSWORD ?? "";
+ *
+ * const client = new VKPLMessageClient({ auth: { login, password }, channels: [target], debugLog: true });
+ * await client.connect();
+ * await client.sendMessage(channel, "Connected to chat!");
+ *
+ * client.on("message", async (ctx) =>{
+ *     if (ctx.message.text.startsWith("!command"))
+ *           await ctx.replyToThread("Hello World");
+ * });
+ */
 class VKPLMessageClient extends EventEmitter {
       private wsServerUrl: string = "wss://pubsub.vkplay.live/connection/websocket";
       private authToken: string;
@@ -18,14 +41,24 @@ class VKPLMessageClient extends EventEmitter {
             login: string,
             password: string,
       };
+      /**
+       * @param debugLog - Если true, то будет выводить логи вебсокета и API в консоль
+      */
       public static debugLog: boolean;
 
       private socketManager: SocketManager;
       private messageService: MessageService;
 
       private _channels: string[];
+
+      /**
+      * @param channels - Список каналов
+      */
       public channels: TVKPLMessageClient.Channel[] = [];
 
+      /**
+      * @availableSmiles - Список доступных смайлов для акаунта бота
+      */
       public availableSmiles: Map<string, string> = new Map();
 
       constructor(config: TVKPLMessageClient.Config) {
@@ -52,19 +85,33 @@ class VKPLMessageClient extends EventEmitter {
                   return;
 
             const mappedMessage: TVKPLMessageClient.ChatMessage = MapApiToLib.mapTNewMessageToChatMessage(message, channel);
+            const ctx: TVKPLMessageClient.MessageEventContext = {
+                  ...mappedMessage,
+                  sendMessage: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers),
+                  reply: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers ? [...mentionUsers, mappedMessage.user.id] : [mappedMessage.user.id]),
+                  replyToThread: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers, mappedMessage.id),
+            };
             this.emit("message",
-                  {
-                        ...mappedMessage,
-                        sendMessage: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers),
-                        reply: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers ? [...mentionUsers, mappedMessage.user.id] : [mappedMessage.user.id]),
-                        replyToThread: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers, mappedMessage.id),
-                  });
+                  ctx);
             console.log(`[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`);
       }
 
+      /**
+       * @param id - Идентификатор
+       *
+       * Возвращает данные канала c API по имени.
+       * Поск происходит по каналам, указанным в конфиге
+       */
       public findChannelById(id: string): TVKPLMessageClient.Channel | undefined {
             return this.channels.find(channel => channel.publicWebSocketChannel === id);
       }
+
+      /**
+       * @param name - Имя канала
+       *
+       * Возвращает данные канала c API по имени.
+       * Поск происходит по каналам, указанным в конфиге
+       */
       public findChannelByName(name: string): TVKPLMessageClient.Channel | undefined {
             return this.channels.find(channel => channel.blogUrl === name);
       }
@@ -88,6 +135,10 @@ class VKPLMessageClient extends EventEmitter {
                   this.authToken = token.accessToken;
       }
 
+      /**
+      * Подключает бота к каналам, которые были переданы в конфиг
+      * Необходимо вызвать этот метод, если вы хотите, чтобы бот получал сообщения из каналов
+      */
       public async connect(): Promise<void> {
             if (!this.authToken && this.credentials) {
                   await this.getToken();
@@ -117,8 +168,17 @@ class VKPLMessageClient extends EventEmitter {
             await this.connectToChat();
       }
 
-      public async sendMessage(message: string, channel: string, mentionUserId?: number[], threadId?: number): Promise<void> {
-            await this.messageService.sendMessage(message, channel, mentionUserId, threadId);
+      /**
+      * @param message - Сообщение
+      * @param channel - Канал
+      * @param mentionUserId - ID пользователей, которые должны быть упомянуты в сообщении
+      * @param threadId - ID сообщения, если нужно ответить в конкретной ветке
+      * @return {Promise<APITypes.TMessageResponse>} Ответ API на сообщение
+      *
+      * Позволяет отправлять сообщение в чат трансляции без подключения к чату. Нужно лишь указать канал, куда будет отправлено сообщение
+      */
+      public async sendMessage(message: string, channel: string, mentionUserId?: number[], threadId?: number): Promise<APITypes.TMessageResponse> {
+            return this.messageService.sendMessage(message, channel, mentionUserId, threadId);
       }
 }
 
