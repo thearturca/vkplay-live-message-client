@@ -44,7 +44,10 @@ export class MapApiToLib {
                   id: author.id,
                   isChatModerator: author.isChatModerator,
                   name: author.name,
-                  nick: author.nick
+                  nick: author.nick,
+                  isOwner: author.isOwner,
+                  vkplayProfileLink: author.vkplayProfileLink,
+                  nickColor: author.nickColor,
             };
       }
 }

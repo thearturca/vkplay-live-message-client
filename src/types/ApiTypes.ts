@@ -30,18 +30,22 @@ export namespace APITypes {
       };
 
       export type TAuthor = {
-            badges: TBadge[],
-            createdAt: number,
-            isChatModerator: boolean,
       } & TUser;
 
       export type TUser = {
+            badges: TBadge[],
+            createdAt: number,
+            isOwner: boolean,
+            isVerifiedStreamer: boolean,
+            vkplayProfileLink: string,
+            isChatModerator: boolean,
             displayName: string,
             id: number,
             name: string,
             hasAvatar: boolean,
             avatarUrl: string,
             nick: string
+            nickColor: number,
       };
 
       export type TMessageBlockText = {

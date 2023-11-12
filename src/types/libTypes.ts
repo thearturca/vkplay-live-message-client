@@ -59,6 +59,9 @@ export namespace TVKPLMessageClient {
             displayName: string,
             hasAvatar: boolean,
             avatarUrl: string,
+            isOwner: boolean,
+            vkplayProfileLink: string
+            nickColor: number,
       }
 
       export type Badge = {
