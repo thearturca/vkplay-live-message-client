@@ -48,3 +48,4 @@ client.on("message", async (context) =>{
             await context.sendMessage("Hello World");
 });
 ```
+## [Поддержи проект на бусти!](https://boosty.to/thearturca/single-payment/donation/495699/target?share=target_link)
