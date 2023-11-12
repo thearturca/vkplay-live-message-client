@@ -26,7 +26,7 @@ const authToken: string = process.env.VKPL_OAUTH ?? "";
 
 const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
 await client.connect();
-await client.sendMessage(channel, "Connected to chat!");
+await client.sendMessage("Connected to chat!", target);
 
 client.on("message", async (context) =>{
       if (context.message.text.startsWith("!command"))
@@ -41,7 +41,7 @@ const password: string = process.env.VKPL_PASSWORD ?? "";
 
 const client = new VKPLMessageClient({ auth: { login, password }, channels: [target], debugLog: true });
 await client.connect();
-await client.sendMessage(channel, "Connected to chat!");
+await client.sendMessage("Connected to chat!", target);
 
 client.on("message", async (context) =>{
       if (context.message.text.startsWith("!command"))
