@@ -3,6 +3,8 @@ import { APITypes } from "../types/ApiTypes.js";
 import { TVKPLMessageClient } from "../types/libTypes.js";
 import { VKPLApiService } from "./VKPLApiService.js";
 
+const markdownLinkRegex = /(?:__|[*#])|\[(.*?)\]\((.*?)\)/gm;
+
 export class MessageService {
       constructor(private authToken: string, public smiles: Map<string, string>) {
       }
@@ -22,6 +24,17 @@ export class MessageService {
             return res;
       }
 
+      static replaceMarkdownLinks(message: string): [string, RegExpMatchArray[]] {
+            const markdownLinks = Array.from(message.matchAll(markdownLinkRegex));
+            return [
+                  message.replaceAll(markdownLinkRegex, (substring) => {
+                        const index = markdownLinks.findIndex(link => link[0] === substring);
+                        return "__markdownLink+" + index.toString() + "__";
+                  }),
+                  markdownLinks
+            ];
+      }
+
       public serializeMessage(message: string, mentionIds?: number[]): APITypes.TMessageBlock[] {
             const serializedMessage: APITypes.TMessageBlock[] = [];
 
@@ -29,17 +42,37 @@ export class MessageService {
                   for (const mentionId of mentionIds)
                         serializedMessage.push(...this.getMentionBlock(mentionId));
 
-            const splitedMessage: string[] = message.split(" ");
+            const [messageWithoutMarkdownLinks, markdownLinks] = MessageService.replaceMarkdownLinks(message);
+            const splitedMessage: string[] = messageWithoutMarkdownLinks.split(" ");
             let textStack: string = "";
 
             for (const word of splitedMessage)
                   if (this.smiles.has(word)) {
-                        serializedMessage.push(...this.getTextBlock(textStack));
-                        textStack = " ";
+                        if (textStack != "") {
+                              serializedMessage.push(...this.getTextBlock(textStack));
+                              textStack = "";
+                        }
 
                         serializedMessage.push(...this.getSmileBlock(word, this.smiles.get(word)!));
-                  }
-                  else {
+                  } else if (word.startsWith("https://") || word.startsWith("http://")) {
+                        if (textStack != "") {
+                              serializedMessage.push(...this.getTextBlock(textStack));
+                              textStack = "";
+                        }
+
+                        serializedMessage.push(...this.getLinkBlock(word, word));
+                  } else if (word.startsWith("__markdownLink+") && word.endsWith("__")) {
+                        const mdlIndex = Number(word.slice("__markdownLink+".length, -2));
+
+                        if (!isNaN(mdlIndex) && markdownLinks[mdlIndex]) {
+                              if (textStack != "") {
+                                    serializedMessage.push(...this.getTextBlock(textStack));
+                                    textStack = "";
+                              }
+
+                              serializedMessage.push(...this.getLinkBlock(markdownLinks[mdlIndex][2], markdownLinks[mdlIndex][1] || markdownLinks[mdlIndex][2]));
+                        }
+                  } else {
                         textStack += word + " ";
                   }
 
@@ -58,15 +91,33 @@ export class MessageService {
       }
 
       private getTextBlock(text: string): APITypes.TMessageBlock[] {
-            return [{ type: "text", content: JSON.stringify([text, "unstyled", []]), modificator: "" }];
+            return [
+                  { type: "text", content: JSON.stringify([text, "unstyled", []]), modificator: "" }
+            ];
       }
 
       private getBlockEnd(): APITypes.TMessageBlock {
             return { type: "text", content: "", modificator: "BLOCK_END" };
       }
 
-      private getMentionBlock(userId: number): APITypes.TMessageBlockMention[] {
-            return [{ type: "mention", id: userId }]
+      private getMentionBlock(userId: number): APITypes.TMessageBlock[] {
+            return [
+                  this.getBlockEnd(),
+                  { type: "mention", id: userId },
+                  this.getBlockEnd(),
+            ];
+      }
+
+      private getLinkBlock(link: string, text?: string): APITypes.TMessageBlock[] {
+            return [
+                  {
+                        explicit: false,
+                        type: "link",
+                        content: JSON.stringify([text ?? link, "unstyled", []]),
+                        url: link
+                  },
+                  ...this.getTextBlock(" ")
+            ];
       }
 
       public static deserializeMessage(message: APITypes.TMessageBlock[]): TVKPLMessageClient.DeserializedMessage {
@@ -74,6 +125,7 @@ export class MessageService {
                   smiles: [],
                   text: "",
                   mentions: [],
+                  links: [],
             };
 
             for (const block of message)
@@ -99,6 +151,14 @@ export class MessageService {
                         case 'smile':
                               deserializedMessage.smiles.push(block as APITypes.TMessageBlockSmile);
                               deserializedMessage.text = deserializedMessage.text.trim() + " " + (block as APITypes.TMessageBlockSmile).name
+                              break;
+
+                        case 'link':
+                              deserializedMessage.links.push({
+                                    text: block.content,
+                                    url: (block as APITypes.TMessageBlockLink).url,
+                              });
+                              deserializedMessage.text = deserializedMessage.text.trim() + " " + (block.content && block.content.length > 0 ? JSON.parse(block.content)[0] : "");
                               break;
 
                         default:

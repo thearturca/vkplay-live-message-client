@@ -61,6 +61,13 @@ export namespace APITypes {
             type: 'mention',
       };
 
+      export type TMessageBlockLink = {
+            content: string,
+            explicit: boolean,
+            type: 'link',
+            url: string,
+      };
+
       export type TContentParsed = [string, "unstyled" | string, []];
 
       export type TSmile = {
@@ -76,7 +83,7 @@ export namespace APITypes {
             type: 'smile',
       } & TSmile;
 
-      export type TMessageBlock = TMessageBlockText | TMessageBlockSmile | TMessageBlockMention;
+      export type TMessageBlock = TMessageBlockText | TMessageBlockSmile | TMessageBlockMention | TMessageBlockLink;
 
       export type TParentMessage = {
             isPrivate: boolean,

@@ -41,7 +41,16 @@
             ],
             "types": [
                   "node",
-                  "ws"
+                  "ws",
+                  "vitest/globals"
             ]
-      }
+      },
+      "include": [
+            "src/**/*"
+      ],
+      "exclude": [
+            "node_modules",
+            "tests/**/*",
+            "**/*.spec.ts"
+      ]
 }

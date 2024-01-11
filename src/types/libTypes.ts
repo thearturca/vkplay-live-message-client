@@ -42,7 +42,13 @@ export namespace TVKPLMessageClient {
             text: string,
             smiles: Smile[],
             mentions: Mention[],
+            links: Link[],
       };
+
+      export type Link = {
+            text: string,
+            url: string
+      }
 
       export type Mention = {
             userId: number,
