@@ -6,10 +6,9 @@
       "exports": "./lib/index.js",
       "type": "module",
       "scripts": {
-            "start": "ts-node src/index.ts",
-            "test": "ts-node src/test.ts",
+            "test": "vitest run",
             "build": "tsc",
-            "nodemon": "nodemon src/index.ts"
+            "prepublishOnly": "npm run build && npm run test"
       },
       "keywords": [
             "vkplay",
