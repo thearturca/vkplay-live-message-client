@@ -25,15 +25,25 @@ export namespace APITypes {
             isCreated: boolean,
             largeUrl: string,
             mediumUrl: string,
+            smallUrl: string,
             name: string,
-            smallUrl: string
       };
+
+      export type TRole = {
+            id: string,
+            name: string
+            smallUrl: string,
+            largeUrl: string,
+            mediumUrl: string,
+            priority: number,
+      }
 
       export type TAuthor = {
       } & TUser;
 
       export type TUser = {
             badges: TBadge[],
+            roles: TRole[],
             createdAt: number,
             isOwner: boolean,
             isVerifiedStreamer: boolean,

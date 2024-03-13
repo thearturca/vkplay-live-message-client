@@ -48,6 +48,7 @@ export class MapApiToLib {
                   isOwner: author.isOwner,
                   vkplayProfileLink: author.vkplayProfileLink,
                   nickColor: author.nickColor,
+                  roles: author.roles,
             };
       }
 }

@@ -57,10 +57,20 @@ export namespace TVKPLMessageClient {
             nick?: string
       };
 
+      export type Role = {
+            id: string,
+            name: string,
+            priority: number,
+            smallUrl: string,
+            mediumUrl: string
+            largeUrl: string,
+      }
+
       export type User = {
             id: number,
             isChatModerator: boolean,
             badges: Badge[],
+            roles: Role[],
             name: string,
             nick: string,
             displayName: string,
