@@ -104,7 +104,7 @@ export class SocketManager extends EventEmitter {
             const data: APITypes.WsMessage<unknown> = JSON.parse(event.data as string);
 
             if (VKPLMessageClient.debugLog)
-                  console.warn("[debug:websocket] new message", JSON.stringify(event.data, null, 4));
+                  console.warn("[debug:websocket] new message", JSON.stringify(data, null, 4));
 
             if (data.id)
                   this.checkMethod(data);
