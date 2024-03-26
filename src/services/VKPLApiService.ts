@@ -9,26 +9,26 @@ export type HTTPMethod = "GET" | "POST" | "PUT" | "DELETE";
 export class VKPLApiService {
       public static async getSmilesSet(authToken: string, channelUrl: string): Promise<APITypes.TSmilesResponse> {
             const headers = { Authorization: `Bearer ${authToken}` };
-            return await VKPLApiService.makeRequest<APITypes.TSmilesResponse>(`https://api.vkplay.live/v1/blog/${channelUrl}/smile/user_set/`, "GET", headers);
+            return await VKPLApiService.makeRequest<APITypes.TSmilesResponse>(`https://api.live.vkplay.ru/v1/blog/${channelUrl}/smile/user_set/`, "GET", headers);
       }
 
       public static async getBlog(channelUrl: string): Promise<APITypes.TBlogResponse> {
-            return await VKPLApiService.makeRequest<APITypes.TBlogResponse>(`https://api.vkplay.live/v1/blog/${channelUrl}`, "GET");
+            return await VKPLApiService.makeRequest<APITypes.TBlogResponse>(`https://api.live.vkplay.ru/v1/blog/${channelUrl}`, "GET");
       }
 
       public static async getWebSocketToken(): Promise<APITypes.TTokenResponse> {
             const headers = { "X-From-Id": randomUUID() };
-            return await VKPLApiService.makeRequest<APITypes.TTokenResponse>(`https://api.vkplay.live/v1/ws/connect`, "GET", headers);
+            return await VKPLApiService.makeRequest<APITypes.TTokenResponse>(`https://api.live.vkplay.ru/v1/ws/connect`, "GET", headers);
       }
 
       public static async getUserCurrent(authToken: string): Promise<APITypes.TUser> {
             const headers = { Authorization: `Bearer ${authToken}` };
-            return await VKPLApiService.makeRequest<APITypes.TUser>("https://api.vkplay.live/v1/user/current", "GET", headers);
+            return await VKPLApiService.makeRequest<APITypes.TUser>("https://api.live.vkplay.ru/v1/user/current", "GET", headers);
       }
 
       public static async sendMessage(channel: string, authToken: string, body: string): Promise<APITypes.TMessageResponse> {
             const headers = { Authorization: `Bearer ${authToken}`, "Content-type": "application/x-www-form-urlencoded" };
-            return await VKPLApiService.makeRequest<APITypes.TMessageResponse>(`https://api.vkplay.live/v1/blog/${channel}/public_video_stream/chat`, "POST", headers, undefined, body);
+            return await VKPLApiService.makeRequest<APITypes.TMessageResponse>(`https://api.live.vkplay.ru/v1/blog/${channel}/public_video_stream/chat`, "POST", headers, undefined, body);
       }
 
       static async getToken(username: string, password: string): Promise<APITypes.AuthResponse> {
@@ -47,7 +47,7 @@ export class VKPLApiService {
             });
 
             await fetch.fetch("https://account.vkplay.ru/oauth2/?redirect_uri=" +
-                  "https%3A%2F%2Fvkplay.live%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1", {
+                  "https%3A%2F%2Flive.vkplay.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1", {
 
                   method: "GET",
                   headers: {
@@ -57,11 +57,11 @@ export class VKPLApiService {
                   },
                   dispatcher: agent,
             })
-            await fetch.fetch("https://vkplay.live", {
+            await fetch.fetch("https://live.vkplay.ru", {
                   dispatcher: agent,
             });
 
-            const cookies = await jar.getCookies("https://vkplay.live");
+            const cookies = await jar.getCookies("https://live.vkplay.ru");
             const tokenCookie = cookies.find(c => c.key === "auth");
 
             if (!tokenCookie)

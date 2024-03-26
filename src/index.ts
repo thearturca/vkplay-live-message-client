@@ -35,7 +35,7 @@ declare interface VKPLMessageClient {
  * });
  */
 class VKPLMessageClient extends EventEmitter {
-      private wsServerUrl: string = "wss://pubsub.vkplay.live/connection/websocket";
+      private wsServerUrl: string = "wss://pubsub.live.vkplay.ru/connection/websocket";
       private authToken: string;
       private credentials?: {
             login: string,

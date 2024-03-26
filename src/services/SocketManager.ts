@@ -22,7 +22,7 @@ export class SocketManager extends EventEmitter {
 
       public connect(): Promise<void> {
             return new Promise((resolve, reject) => {
-                  this.socket = new WebSocket(this.wsServerUrl, { headers: { Origin: "https://vkplay.live" } });
+                  this.socket = new WebSocket(this.wsServerUrl, { headers: { Origin: "https://live.vkplay.ru" } });
 
                   this.socket.onopen = async (e) => {
                         await this.onOpen(e).catch(reject);
@@ -35,7 +35,7 @@ export class SocketManager extends EventEmitter {
       }
 
       public async onOpen(event: WebSocket.Event): Promise<void> {
-            console.log("[open] Initializing connection to vkplay.live websocket");
+            console.log("[open] Initializing connection to live.vkplay.ru websocket");
 
             const wsToken = await VKPLApiService.getWebSocketToken();
 
@@ -76,7 +76,7 @@ export class SocketManager extends EventEmitter {
                   payload.id = this.currentMethodId;
 
                   if (VKPLMessageClient.debugLog)
-                        console.warn("[debug:websocket] invoking vkplay live websocket method", JSON.stringify(payload, null, 4));
+                        console.warn("[debug:websocket] invoking live.vkplay.ru websocket method", JSON.stringify(payload, null, 4));
 
                   this.methods.push({ id: payload.id, callbBack: resolve });
                   this.socket.send(JSON.stringify(payload), (error) => {
