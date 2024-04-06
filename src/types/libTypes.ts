@@ -4,12 +4,12 @@ export namespace TVKPLMessageClient {
       export type Smile = { id: string, name: string }
       export type Config = {
             channels: string[],
-            auth: {
+            auth?: {
                   token: string,
             } | {
                   login: string,
                   password: string
-            },
+            } | "readonly",
             wsServer?: string,
             debugLog?: boolean
       };

@@ -22,12 +22,13 @@ declare interface VKPLMessageClient {
  * Поддерживает несколько каналов, отправку сообщений по каждому из них, добавление упоминаний пользователей, отправку в ветку сообщений.
  *
  * @example
- * const login: string = process.env.VKPL_LOGIN ?? "";
- * const password: string = process.env.VKPL_PASSWORD ?? "";
+ * const login: string = process.env.VKPL_LOGIN ??;
+ * const password: string = process.env.VKPL_PASSWORD;
+ * const target: string = process.env.VKPL_TARGET;
  *
  * const client = new VKPLMessageClient({ auth: { login, password }, channels: [target], debugLog: true });
  * await client.connect();
- * await client.sendMessage(channel, "Connected to chat!");
+ * await client.sendMessage(target, "Connected to chat!");
  *
  * client.on("message", async (ctx) =>{
  *     if (ctx.message.text.startsWith("!command"))
@@ -36,7 +37,7 @@ declare interface VKPLMessageClient {
  */
 class VKPLMessageClient extends EventEmitter {
       private wsServerUrl: string = "wss://pubsub.live.vkplay.ru/connection/websocket";
-      private authToken: string;
+      private authToken: string = "";
       private credentials?: {
             login: string,
             password: string,
@@ -61,14 +62,17 @@ class VKPLMessageClient extends EventEmitter {
       */
       public availableSmiles: Map<string, string> = new Map();
 
-      constructor(config: TVKPLMessageClient.Config) {
+      constructor(private config: TVKPLMessageClient.Config) {
             super();
 
             VKPLMessageClient.debugLog = config.debugLog ?? false;
-            this.authToken = "token" in config.auth ? config.auth.token : "";
 
-            if ("login" in config.auth)
-                  this.credentials = { ...config.auth };
+            if (config.auth && config.auth !== "readonly") {
+                  this.authToken = "token" in config.auth ? config.auth.token : "";
+
+                  if ("login" in config.auth)
+                        this.credentials = { ...config.auth };
+            }
 
             this._channels = config.channels;
             this.wsServerUrl = config.wsServer ?? this.wsServerUrl;
@@ -91,8 +95,7 @@ class VKPLMessageClient extends EventEmitter {
                   reply: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers ? [...mentionUsers, mappedMessage.user.id] : [mappedMessage.user.id]),
                   replyToThread: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl, mentionUsers, mappedMessage.id),
             };
-            this.emit("message",
-                  ctx);
+            this.emit("message", ctx);
             console.log(`[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`);
       }
 
@@ -116,20 +119,20 @@ class VKPLMessageClient extends EventEmitter {
             return this.channels.find(channel => channel.blogUrl === name);
       }
 
-      private async connectToChat(): Promise<void> {
+      private async connectToChats(): Promise<void> {
             for (const channel of this.channels)
                   await this.socketManager.connectToChat(channel);
       }
 
       private async onReconnect(): Promise<void> {
-            this.connectToChat();
+            this.connectToChats();
       }
 
       private async getToken(): Promise<void> {
             if (!this.credentials)
                   return;
 
-            const token = await VKPLApiService.getToken(this.credentials?.login ?? "", this.credentials?.password ?? "");
+            const token = await VKPLApiService.getToken(this.credentials.login, this.credentials.password);
 
             if (token.accessToken)
                   this.authToken = token.accessToken;
@@ -137,7 +140,7 @@ class VKPLMessageClient extends EventEmitter {
 
       /**
       * Подключает бота к каналам, которые были переданы в конфиг
-      * Необходимо вызвать этот метод, если вы хотите, чтобы бот получал сообщения из каналов
+      * Необходимо вызвать этот метод, если вы хотите, чтобы бот получал сообщения
       */
       public async connect(): Promise<void> {
             if (!this.authToken && this.credentials) {
@@ -149,6 +152,14 @@ class VKPLMessageClient extends EventEmitter {
                   this.channels.push(channel);
             }
 
+            if (this.config.auth && this.config.auth !== "readonly")
+                  await this.initMessageService();
+
+            await this.socketManager.connect();
+            await this.connectToChats();
+      }
+
+      private async initMessageService(): Promise<void> {
             if (this.authToken !== "" && this.channels.length) {
                   const smilesSet: APITypes.TSmilesResponse = await VKPLApiService.getSmilesSet(this.authToken, this.channels[0].blogUrl);
 
@@ -161,11 +172,9 @@ class VKPLMessageClient extends EventEmitter {
 
                   this.messageService = new MessageService(this.authToken, this.availableSmiles);
             }
-            else
+            else {
                   throw new Error("[chat] Cannot get list of smiles because of no auth token nor channels provided");
-
-            await this.socketManager.connect();
-            await this.connectToChat();
+            }
       }
 
       /**
@@ -178,6 +187,15 @@ class VKPLMessageClient extends EventEmitter {
       * Позволяет отправлять сообщение в чат трансляции без подключения к чату. Нужно лишь указать канал, куда будет отправлено сообщение
       */
       public async sendMessage(message: string, channel: string, mentionUserId?: number[], threadId?: number): Promise<APITypes.TMessageResponse> {
+            if (!this.config.auth || this.config.auth === "readonly")
+                  throw new Error("You must provide auth token or credentials");
+
+            if (!this.messageService)
+                  throw new Error("You must call connect() first");
+
+            if (!this.authToken)
+                  throw new Error("You must provide auth token or credentials");
+
             return this.messageService.sendMessage(message, channel, mentionUserId, threadId);
       }
 }

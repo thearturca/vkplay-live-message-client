@@ -22,6 +22,10 @@ export class SocketManager extends EventEmitter {
 
       public connect(): Promise<void> {
             return new Promise((resolve, reject) => {
+                  if (this.socket) {
+                        this.socket.close();
+                  }
+
                   this.socket = new WebSocket(this.wsServerUrl, { headers: { Origin: "https://live.vkplay.ru" } });
 
                   this.socket.onopen = async (e) => {
