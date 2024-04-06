@@ -53,6 +53,15 @@ client.on("message", async (context) => {
 
 ## Фичи
 
+### Readonly режим
+В режиме readonly нельзя отправлять сообщения, но можно получать их.
+Для активации этого режима нужно в поле auth написать `"readonly"` или не передавать параметр `auth` вообще.
+
+```TS
+const client = new VKPLMessageClient({ auth: "readonly", channels: [target], debugLog: true });
+await client.connect(); // После подключения все сообщения будут выводится в консоль
+```
+
 ### Вставка ссылок
 В боте есть возможность вставки ссылок в текст сообщения. Доступно 2 формата ссылок:
 - Прямая ссылка. Пример: `https://github.com/thearturca/vkplay-live-message-client`
