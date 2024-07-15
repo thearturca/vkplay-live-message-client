@@ -1,20 +1,22 @@
 import WebSocket from "ws";
 import EventEmitter from "events";
-import { APITypes } from "../types/ApiTypes.js";
-import { TVKPLMessageClient } from "../types/libTypes.js";
-import { VKPLApiService } from "./VKPLApiService.js";
+import { VkWsTypes } from "../types/api.v2.js";
+import { TVKPLMessageClient } from "../types/internal.js";
+import { VkplApi } from "./VKPLApiService.js";
 import VKPLMessageClient from "../index.js";
 
-export declare interface SocketManager {
-      on(event: 'message', listener: (newMessage: APITypes.TNewMessage) => void): this;
+export declare interface CentrifugeClient {
+      on(event: 'message', listener: (newMessage: VkWsTypes.WsMessage<VkWsTypes.ChatMessage>) => void): this;
       on(event: 'reconnect', listener: () => void): this;
+      on(event: 'reward', listener: (data: VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>) => void): this;
       on(event: string, listener: Function): this;
 }
 
-export class SocketManager extends EventEmitter {
+export class CentrifugeClient extends EventEmitter {
       private socket: WebSocket;
       private currentMethodId: number = 0;
       private methods: vkplWsMethod<unknown>[] = [];
+      public wsToken: string | undefined;
 
       constructor(private wsServerUrl: string) {
             super();
@@ -38,28 +40,35 @@ export class SocketManager extends EventEmitter {
             });
       }
 
-      public async onOpen(event: WebSocket.Event): Promise<void> {
+      public disconnect(): void {
+            if (this.socket) {
+                  this.socket.close();
+                  this.socket.removeAllListeners();
+            }
+      }
+
+      public async onOpen(_: WebSocket.Event): Promise<void> {
             console.log("[open] Initializing connection to live.vkplay.ru websocket");
 
-            const wsToken = await VKPLApiService.getWebSocketToken();
+            const wsToken = await VkplApi.getWebSocketConnectToken(this.wsToken);
 
             if (VKPLMessageClient.debugLog)
                   console.warn("[debug:websocket] get websocket token", JSON.stringify(wsToken, null, 5))
 
-            const payload: vkplWsPayload = {
-                  "params": {
-                        "token": wsToken.token ?? "",
-                        "name": "js"
+            const payload: VkWsTypes.Method<VkWsTypes.ConnectMethod> = {
+                  connect: {
+                        token: wsToken.token ?? "",
+                        name: "js"
                   },
-                  "id": 0
-            }
+                  id: 0
+            };
 
             await this.invokeMethod(payload);
             console.log("[open] Connected");
             this.emit("open");
       }
 
-      private checkMethod(wsMessage: APITypes.WsMessage<unknown>): void {
+      private checkMethod<T extends Record<string, unknown>>(wsMessage: VkWsTypes.WsMethodResponse<T>): void {
             const methodIndex: number = this.methods.findIndex(method => method.id === wsMessage.id);
 
             if (methodIndex === -1)
@@ -74,7 +83,7 @@ export class SocketManager extends EventEmitter {
             this.methods.splice(methodIndex, 1);
       }
 
-      public async invokeMethod(payload: vkplWsPayload): Promise<unknown> {
+      public async invokeMethod<T extends Record<string, unknown>>(payload: VkWsTypes.Method<T>): Promise<unknown> {
             return new Promise((resolve, reject) => {
                   this.currentMethodId += 1;
                   payload.id = this.currentMethodId;
@@ -91,9 +100,8 @@ export class SocketManager extends EventEmitter {
       }
 
       public async connectToChat(channel: TVKPLMessageClient.Channel): Promise<unknown> {
-            const connectToChatPaylod: vkplWsPayload = {
-                  "method": 1,
-                  "params": {
+            const connectToChatPaylod: VkWsTypes.Method<VkWsTypes.SubscribeMethod> = {
+                  "subscribe": {
                         "channel": `public-chat:${channel.publicWebSocketChannel}`
                   },
                   "id": 0
@@ -104,19 +112,44 @@ export class SocketManager extends EventEmitter {
             return res;
       }
 
+      public async connectToReedem(channel: TVKPLMessageClient.Channel, wsSubscribeToken: string): Promise<unknown> {
+            const connectToReedemPaylod: VkWsTypes.Method<VkWsTypes.SubscribeMethod> = {
+                  "subscribe": {
+                        "channel": `channel-info-manage:${channel.publicWebSocketChannel}`,
+                        "token": wsSubscribeToken,
+                  },
+                  "id": 0
+            };
+
+            console.log(`[chat:${channel.blogUrl}] Connecting to channel reedem...`)
+            const res = await this.invokeMethod(connectToReedemPaylod);
+            console.log(`[chat:${channel.blogUrl}] Connected to channel reedem`);
+            return res;
+      }
+
       public onMessage(event: WebSocket.MessageEvent): void {
-            const data: APITypes.WsMessage<unknown> = JSON.parse(event.data as string);
+            if (event.data == "{}") {
+                  this.socket.send("{}");
+                  return;
+            }
+
+            const data: Record<string, unknown> = JSON.parse(event.data as string);
 
             if (VKPLMessageClient.debugLog)
                   console.warn("[debug:websocket] new message", JSON.stringify(data, null, 4));
 
-            if (data.id)
-                  this.checkMethod(data);
+            if ("id" in data)
+                  this.checkMethod(data as VkWsTypes.WsMethodResponse<{}>);
 
-            const newMessage: APITypes.WsMessage<APITypes.TNewMessage> = data as APITypes.WsMessage<APITypes.TNewMessage>;
+            const chatMessage = data as VkWsTypes.WsMessage<VkWsTypes.ChatMessage>;
 
-            if (newMessage.result.data && newMessage.result.data.data.type === "message")
-                  this.emit("message", newMessage.result);
+            if (chatMessage.push?.pub.data && chatMessage.push?.pub?.data.type === "message")
+                  this.emit("message", chatMessage);
+
+            const rewardMessage = data as VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>;
+
+            if (rewardMessage.push?.pub && rewardMessage.push?.pub?.data.type === "cp_reward_demand")
+                  this.emit("reward", rewardMessage);
       }
 
       public async onClose(event: WebSocket.CloseEvent): Promise<void> {
@@ -138,5 +171,3 @@ export class SocketManager extends EventEmitter {
 type vkplWsMethod<T> = { id: number, callbBack: vkplWsCallback<T> };
 
 type vkplWsCallback<T> = (params: T) => void;
-
-type vkplWsPayload = { params: any, method?: number, id: number };

@@ -1,34 +1,48 @@
 import fetch, { HeadersInit } from "undici";
 import { randomUUID } from "crypto";
-import { APITypes } from "../types/ApiTypes.js";
+import { APITypes } from "../types/api.js";
 import { CookieAgent } from "http-cookie-agent/undici";
 import { CookieJar } from "tough-cookie";
 
 export type HTTPMethod = "GET" | "POST" | "PUT" | "DELETE";
 
-export class VKPLApiService {
+export class VkplApi {
       public static async getSmilesSet(authToken: string, channelUrl: string): Promise<APITypes.TSmilesResponse> {
             const headers = { Authorization: `Bearer ${authToken}` };
-            return await VKPLApiService.makeRequest<APITypes.TSmilesResponse>(`https://api.live.vkplay.ru/v1/blog/${channelUrl}/smile/user_set/`, "GET", headers);
+            return await VkplApi.send<APITypes.TSmilesResponse>(`https://api.live.vkplay.ru/v1/blog/${channelUrl}/smile/user_set/`, "GET", headers);
       }
 
       public static async getBlog(channelUrl: string): Promise<APITypes.TBlogResponse> {
-            return await VKPLApiService.makeRequest<APITypes.TBlogResponse>(`https://api.live.vkplay.ru/v1/blog/${channelUrl}`, "GET");
+            return await VkplApi.send<APITypes.TBlogResponse>(`https://api.live.vkplay.ru/v1/blog/${channelUrl}`, "GET");
       }
 
-      public static async getWebSocketToken(): Promise<APITypes.TTokenResponse> {
-            const headers = { "X-From-Id": randomUUID() };
-            return await VKPLApiService.makeRequest<APITypes.TTokenResponse>(`https://api.live.vkplay.ru/v1/ws/connect`, "GET", headers);
+      public static async getWebSocketConnectToken(authToken?: string): Promise<APITypes.TokenResponse> {
+            const headers: Record<string, string> = { "X-From-Id": randomUUID() };
+
+            if (authToken)
+                  headers.Authorization = `Bearer ${authToken}`;
+
+            return await VkplApi.send<APITypes.TokenResponse>(`https://api.live.vkplay.ru/v1/ws/connect`, "GET", headers);
+      }
+
+      public static async getWebSocketSubscriptionToken(authToken: string, channels: string[]): Promise<APITypes.WebSocketSubscriptionTokensResponse> {
+            const headers = { Authorization: `Bearer ${authToken}` };
+            const params = new URLSearchParams({
+                  channels: channels.map(c => `channel-info-manage:${c}`).join(",")
+            });
+
+            return await VkplApi.send<APITypes.WebSocketSubscriptionTokensResponse>(`https://api.live.vkplay.ru/v1/ws/subscribe`, "GET", headers, params);
       }
 
       public static async getUserCurrent(authToken: string): Promise<APITypes.TUser> {
             const headers = { Authorization: `Bearer ${authToken}` };
-            return await VKPLApiService.makeRequest<APITypes.TUser>("https://api.live.vkplay.ru/v1/user/current", "GET", headers);
+
+            return await VkplApi.send<APITypes.TUser>("https://api.live.vkplay.ru/v1/user/current", "GET", headers);
       }
 
       public static async sendMessage(channel: string, authToken: string, body: string): Promise<APITypes.TMessageResponse> {
             const headers = { Authorization: `Bearer ${authToken}`, "Content-type": "application/x-www-form-urlencoded" };
-            return await VKPLApiService.makeRequest<APITypes.TMessageResponse>(`https://api.live.vkplay.ru/v1/blog/${channel}/public_video_stream/chat`, "POST", headers, undefined, body);
+            return await VkplApi.send<APITypes.TMessageResponse>(`https://api.live.vkplay.ru/v1/blog/${channel}/public_video_stream/chat`, "POST", headers, undefined, body);
       }
 
       static async getToken(username: string, password: string): Promise<APITypes.AuthResponse> {
@@ -72,7 +86,7 @@ export class VKPLApiService {
             return parsedToken;
       }
 
-      private static async makeRequest<T>(url: string, method: HTTPMethod, headers?: HeadersInit, params?: URLSearchParams, body?: string, jar?: CookieJar): Promise<T> {
+      private static async send<T>(url: string, method: HTTPMethod, headers?: HeadersInit, params?: URLSearchParams, body?: string, jar?: CookieJar): Promise<T> {
             const fetchOptions: fetch.RequestInit = {
                   headers,
                   method,

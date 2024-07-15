@@ -1,6 +1,14 @@
-
 export namespace APITypes {
-      export type TTokenResponse = { token?: string }
+      export type TokenResponse = { token?: string }
+
+      export type WebSocketSubscriptionTokensResponse = {
+            data: {
+                  tokens: {
+                        token: string,
+                        channel: string,
+                  }[],
+            },
+      }
 
       export type AuthResponse = {
             accessToken: string,

@@ -1,9 +1,10 @@
-import { APITypes } from "./ApiTypes.js";
+import { APITypes } from "./api.js";
+import { VkWsTypes } from "./api.v2.js";
 
 export namespace TVKPLMessageClient {
       export type Smile = { id: string, name: string }
-      export type Config = {
-            channels: string[],
+      export type Config<T extends string> = {
+            channels: T[],
             auth?: {
                   token: string,
             } | {
@@ -11,7 +12,7 @@ export namespace TVKPLMessageClient {
                   password: string
             } | "readonly",
             wsServer?: string,
-            debugLog?: boolean
+            debugLog?: boolean,
       };
 
       export type Channel = {
@@ -23,7 +24,7 @@ export namespace TVKPLMessageClient {
 
       export type ParentMessage = {
             message: DeserializedMessage,
-            user: User,
+            user: VkWsTypes.ChatUser,
             id: number,
             isPrivate: boolean
       };
@@ -31,7 +32,7 @@ export namespace TVKPLMessageClient {
       export type ChatMessage = {
             parent?: ParentMessage,
             message: DeserializedMessage,
-            user: User,
+            user: VkWsTypes.ChatUser,
             channel: Channel,
             createdAt: number,
             id: number,
@@ -66,21 +67,6 @@ export namespace TVKPLMessageClient {
             largeUrl: string,
       }
 
-      export type User = {
-            id: number,
-            isChatModerator: boolean,
-            badges: Badge[],
-            roles: Role[],
-            name: string,
-            nick: string,
-            displayName: string,
-            hasAvatar: boolean,
-            avatarUrl: string,
-            isOwner: boolean,
-            vkplayProfileLink: string
-            nickColor: number,
-      }
-
       export type Badge = {
             achievement: { name: string, type: string },
             id: string,
@@ -94,10 +80,50 @@ export namespace TVKPLMessageClient {
       export type MessageEvent = (messageContext: MessageEventContext) => void;
 
       export type MessageEventContext = ChatMessage & {
+            /**
+            * Отправить сообещние в канал
+            */
             sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
+            /**
+            * Отметить пользователя в сообщении, и отправить его
+            */
             reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
+            /**
+            * Отправить сообщение в тред
+            */
             replyToThread(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
       };
 
+      export type RewardMessage = {
+            /**
+             * Полученная награда
+             */
+            reward: VkWsTypes.Reward & {
+                  /**
+                   * Сообщение к награде
+                   */
+                  message?: DeserializedMessage
+            },
+            /**
+             * Канал, в котором была получена награда
+             */
+            channel: Channel,
+            /**
+             * Пользователь, который получил награду
+             */
+            user: VkWsTypes.User
+      };
 
+      export type RewardEvent = (rewardContext: RewardEventContext) => void;
+
+      export type RewardEventContext = RewardMessage & {
+            /**
+            * Отправить сообещние в канал
+            */
+            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
+            /**
+            * Отметить пользователя в сообщении, и отправить его
+            */
+            reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
+      }
 }

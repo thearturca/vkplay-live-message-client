@@ -1,6 +1,7 @@
 import { describe, expect, test } from "vitest";
 import { MessageService } from "./MessageService.js";
-import { APITypes } from "../types/ApiTypes.js";
+import type { APITypes } from "../types/api.js";
+
 describe("Message service", () => {
       const messageService = new MessageService("token", new Map<string, string>([["Tlen", "6cbbcf8a-58cc-4afb-857a-e3f89f6049a6"]]));
 
