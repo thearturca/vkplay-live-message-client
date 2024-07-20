@@ -1,9 +1,9 @@
 import VKPLMessageClient from "../index.js";
-import { APITypes } from "../types/ApiTypes.js";
-import { TVKPLMessageClient } from "../types/libTypes.js";
-import { VKPLApiService } from "./VKPLApiService.js";
+import { APITypes } from "../types/api.js";
+import { TVKPLMessageClient } from "../types/internal.js";
+import { VkplApi } from "./VKPLApiService.js";
 
-const markdownLinkRegex = /(?:__|[*#])|\[(.*?)\]\((.*?)\)/gm;
+const markdownLinkRegex = /\[(.*?)\]\((.*?)\)/gm;
 
 export class MessageService {
       constructor(private authToken: string, public smiles: Map<string, string>) {
@@ -16,7 +16,7 @@ export class MessageService {
             if (threadId)
                   body.set("reply_to_id", threadId.toString());
 
-            const res = await VKPLApiService.sendMessage(channel, this.authToken, body.toString());
+            const res = await VkplApi.sendMessage(channel, this.authToken, body.toString());
 
             if (VKPLMessageClient.debugLog)
                   console.warn("[debug:send-message] ", JSON.stringify(res, null, 4));
@@ -24,7 +24,7 @@ export class MessageService {
             return res;
       }
 
-      static replaceMarkdownLinks(message: string): [string, RegExpMatchArray[]] {
+      private static replaceMarkdownLinks(message: string): [string, RegExpMatchArray[]] {
             const markdownLinks = Array.from(message.matchAll(markdownLinkRegex));
             return [
                   message.replaceAll(markdownLinkRegex, (substring) => {

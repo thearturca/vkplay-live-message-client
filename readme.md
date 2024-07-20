@@ -30,9 +30,14 @@ const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [ta
 await client.connect();
 await client.sendMessage("Connected to chat!", target);
 
-client.on("message", async (context) => {
-      if (context.message.text.startsWith("!command"))
-            await context.sendMessage("Hello World");
+client.on("message", async (ctx) => {
+      if (ctx.message.text.startsWith("!command"))
+            await ctx.sendMessage("Hello World");
+});
+
+client.on("reward", async (ctx) => {
+      if (ctx.reward.name === "reward_name")
+          await ctx.sendMessage("Reward received!"); 
 });
 ```
 
@@ -45,9 +50,14 @@ const client = new VKPLMessageClient({ auth: { login, password }, channels: [tar
 await client.connect();
 await client.sendMessage("Connected to chat!", target);
 
-client.on("message", async (context) => {
-      if (context.message.text.startsWith("!command"))
-            await context.sendMessage("Hello World");
+client.on("message", async (ctx) => {
+      if (ctx.message.text.startsWith("!command"))
+            await ctx.sendMessage("Hello World");
+});
+
+client.on("reward", async (ctx) => {
+      if (ctx.reward.name === "reward_name")
+          await ctx.sendMessage("Reward received!"); 
 });
 ```
 
@@ -82,4 +92,16 @@ await client.sendMessage("Ссылка на мой гитхаб: https://github.
 
 // отправки ссылки в стиле markdown
 await client.sendMessage("[Ссылка на мой гитхаб](https://github.com/thearturca/vkplay-live-message-client)", target);
+```
+
+### Получение наград
+Возможность получение уведомление об активации награды зрителем.
+```TS
+const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+await client.connect();
+
+client.on("reward", async (ctx) => {
+      if (ctx.reward.name === "reward_name")
+          await ctx.sendMessage("Reward received!"); 
+});
 ```
