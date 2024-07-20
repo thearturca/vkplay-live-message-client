@@ -1,4 +1,4 @@
-import fetch, { HeadersInit } from "undici";
+import { fetch, HeadersInit } from "undici";
 import { randomUUID } from "crypto";
 import { APITypes } from "../types/api.js";
 import { CookieAgent } from "http-cookie-agent/undici";
@@ -49,7 +49,8 @@ export class VkplApi {
             const jar = new CookieJar();
             const agent = new CookieAgent({ cookies: { jar } });
             const body = new URLSearchParams({ "login": username, "password": password });
-            await fetch.fetch("https://auth-ac.vkplay.ru/sign_in", {
+
+            await fetch("https://auth-ac.vkplay.ru/sign_in", {
                   method: "POST",
                   headers: {
                         "Content-Type": "application/x-www-form-urlencoded",
@@ -60,7 +61,7 @@ export class VkplApi {
                   dispatcher: agent,
             });
 
-            await fetch.fetch("https://account.vkplay.ru/oauth2/?redirect_uri=" +
+            await fetch("https://account.vkplay.ru/oauth2/?redirect_uri=" +
                   "https%3A%2F%2Flive.vkplay.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1", {
 
                   method: "GET",
@@ -71,7 +72,7 @@ export class VkplApi {
                   },
                   dispatcher: agent,
             })
-            await fetch.fetch("https://live.vkplay.ru", {
+            await fetch("https://live.vkplay.ru", {
                   dispatcher: agent,
             });
 
@@ -87,7 +88,7 @@ export class VkplApi {
       }
 
       private static async send<T>(url: string, method: HTTPMethod, headers?: HeadersInit, params?: URLSearchParams, body?: string, jar?: CookieJar): Promise<T> {
-            const fetchOptions: fetch.RequestInit = {
+            const fetchOptions: RequestInit = {
                   headers,
                   method,
                   body,
@@ -96,7 +97,7 @@ export class VkplApi {
 
             const finalUrl = `${url}?${new URLSearchParams(params)}`;
 
-            const res = await fetch.fetch(finalUrl, fetchOptions);
+            const res = await fetch(finalUrl, fetchOptions);
 
             if (!res.ok)
                   throw new Error(`[api] Error in request: ${JSON.stringify({ url: finalUrl, body: await res.json() }, null, 5)}`);
