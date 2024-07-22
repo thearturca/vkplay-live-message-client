@@ -103,6 +103,10 @@ export namespace TVKPLMessageClient {
                    * Сообщение к награде
                    */
                   message?: DeserializedMessage
+                  /**
+                   * Статус награды
+                   */
+                  status: VkWsTypes.RewardStatus,
             },
             /**
              * Канал, в котором была получена награда

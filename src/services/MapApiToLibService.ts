@@ -22,6 +22,7 @@ export class MapApiToClient {
                   channel,
                   user: message.data.user,
                   reward: {
+                        status: message.data.status,
                         ...message.data.reward, message: message.data.activationMessage.length > 0
                               ? MessageService.deserializeMessage(message.data.activationMessage)
                               : undefined

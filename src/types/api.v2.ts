@@ -175,6 +175,8 @@ export namespace VkWsTypes {
             type: "actions_journal_new_event",
       }
 
+      export type RewardStatus = "approved" | "pending" | "rejected"
+
       export type CpRewardDemandMessage = {
             data: {
                   createdAt: number,
@@ -182,7 +184,7 @@ export namespace VkWsTypes {
                   demandId: number,
                   activationMessage: ChatMessageBlock[],
                   user: User,
-                  status: string,
+                  status: RewardStatus,
             },
             type: "cp_reward_demand",
       }
