@@ -177,5 +177,7 @@ export namespace VKPLClientInternal {
 
       export type RefreshTokenEvent = (refreshTokenContext: RefreshTokenEventContext) => void;
 
-      export type RefreshTokenEventContext = Context & TokenAuth;
+      export type RefreshTokenEventContext = Context & {
+            auth: TokenAuth,
+      };
 }

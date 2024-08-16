@@ -112,7 +112,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             this.auth = token;
 
             const ctx: VKPLClientInternal.RefreshTokenEventContext = {
-                  ...token,
+                  auth: token,
                   api: this.api,
             };
 
