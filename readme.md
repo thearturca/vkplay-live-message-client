@@ -55,6 +55,11 @@ client.on("reward", async (ctx) => {
 ```
 
 ### Токен + Рефреш токен с сохранением в файл
+
+> [!NOTE]
+> У вас должен быть файл `token.json` с содержимым в следующем виде: `{ accessToken: "token", refreshToken: "refreshToken", expiresAt: 12345, clientId: "clientId" }`
+> Данные нужно брать из `localStorage` вашего браузера
+
 ```TS            
 const auth = JSON.parse(await fs.promises.readFile("token.json", "utf8")); // должен иметь следующий вид: { accessToken: "token", refreshToken: "refreshToken", expiresAt: 12345, clientId: "clientId" }
 
