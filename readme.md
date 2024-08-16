@@ -108,3 +108,28 @@ client.on("reward", async (ctx) => {
           await ctx.sendMessage("Reward received!"); 
 });
 ```
+
+### Статус стрима
+Возможность получить событие о запуске/остановке стрима.
+```TS
+const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+await client.connect();
+
+client.on("stream-status", async (ctx) => {
+      if (ctx.type === "stream_start")
+          await ctx.sendMessage("Stream started!"); 
+
+      if (ctx.type === "stream_end")
+          await ctx.sendMessage("Stream stopped!");
+```
+
+### Информация о канале
+Возможность получать изменения в информации о канале, такие как название, категория, зрители и т.д.
+```TS
+const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+await client.connect();
+
+client.on("channel-info", async (ctx) => {
+      await ctx.sendMessage(`Current viewers: ${ctx.viewers}`);
+});
+```

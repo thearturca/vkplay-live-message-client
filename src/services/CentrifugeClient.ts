@@ -9,6 +9,8 @@ export declare interface CentrifugeClient {
       on(event: 'message', listener: (newMessage: VkWsTypes.WsMessage<VkWsTypes.ChatMessage>) => void): this;
       on(event: 'reconnect', listener: () => void): this;
       on(event: 'reward', listener: (data: VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>) => void): this;
+      on(event: 'channel-info', listener: (data: VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>) => void): this;
+      on(event: 'stream-status', listener: (data: VkWsTypes.WsMessage<VkWsTypes.StreamStatus>) => void): this;
       on(event: string, listener: Function): this;
 }
 
@@ -129,6 +131,20 @@ export class CentrifugeClient extends EventEmitter {
             return res;
       }
 
+      public async connectToChannelInfo(channel: VKPLClientInternal.Channel): Promise<unknown> {
+            const paylod: VkWsTypes.Method<VkWsTypes.SubscribeMethod> = {
+                  "subscribe": {
+                        "channel": `channel-info:${channel.publicWebSocketChannel}`,
+                  },
+                  "id": 0
+            };
+
+            console.log(`[chat:${channel.blogUrl}] Connecting to channel info...`)
+            const res = await this.invokeMethod(paylod);
+            console.log(`[chat:${channel.blogUrl}] Connected to channel info`);
+            return res;
+      }
+
       public onMessage(event: WebSocket.MessageEvent): void {
             if (event.data == "{}") {
                   this.socket.send("{}");
@@ -152,6 +168,16 @@ export class CentrifugeClient extends EventEmitter {
 
             if (rewardMessage.push?.pub && rewardMessage.push?.pub?.data.type === "cp_reward_demand")
                   this.emit("reward", rewardMessage);
+
+            const channelInfo = data as VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>;
+
+            if (channelInfo.push?.pub && channelInfo.push?.pub?.data.type === "stream_online_status")
+                  this.emit("channel-info", channelInfo);
+
+            const streamStatus = data as VkWsTypes.WsMessage<VkWsTypes.StreamStatus>;
+
+            if (streamStatus.push?.pub && (streamStatus.push?.pub?.data.type === "stream_end" || streamStatus.push?.pub?.data.type === "stream_start"))
+                  this.emit("stream-status", streamStatus);
       }
 
       public async onClose(event: WebSocket.CloseEvent): Promise<void> {

@@ -189,6 +189,23 @@ export namespace VkWsTypes {
             type: "cp_reward_demand",
       }
 
+      export type StreamStatus = {
+            videoId: number,
+            type: "stream_end" | "stream_start"
+      }
+
+      export type ChannelInfo = {
+            type: "stream_online_status",
+            blogUrl: string,
+            title: string,
+            category: {
+                  title: string
+            },
+            isOnline: boolean,
+            viewers: number,
+            streamId: string,
+      }
+
       export type WsMessage<T extends Record<string, unknown>> = {
             push: {
                   channel: string,
