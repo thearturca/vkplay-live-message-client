@@ -1,27 +1,10 @@
-import VKPLMessageClient from "../index.js";
 import { APITypes } from "../types/api.js";
-import { TVKPLMessageClient } from "../types/internal.js";
-import { VkplApi } from "./VKPLApiService.js";
+import { VKPLClientInternal } from "../types/internal.js";
 
 const markdownLinkRegex = /\[(.*?)\]\((.*?)\)/gm;
 
-export class MessageService {
-      constructor(private authToken: string, public smiles: Map<string, string>) {
-      }
-
-      public async sendMessage(message: string, channel: string, mentionUsers?: number[], threadId?: number): Promise<APITypes.TMessageResponse> {
-            const serializedMessage = { data: JSON.stringify(this.serializeMessage(message, mentionUsers)) };
-            const body = new URLSearchParams(serializedMessage);
-
-            if (threadId)
-                  body.set("reply_to_id", threadId.toString());
-
-            const res = await VkplApi.sendMessage(channel, this.authToken, body.toString());
-
-            if (VKPLMessageClient.debugLog)
-                  console.warn("[debug:send-message] ", JSON.stringify(res, null, 4));
-
-            return res;
+export class VkplMessageParser {
+      constructor(public smiles: Map<string, string>) {
       }
 
       private static replaceMarkdownLinks(message: string): [string, RegExpMatchArray[]] {
@@ -35,14 +18,14 @@ export class MessageService {
             ];
       }
 
-      public serializeMessage(message: string, mentionIds?: number[]): APITypes.TMessageBlock[] {
+      public serialize(message: string, mentionIds?: number[]): APITypes.TMessageBlock[] {
             const serializedMessage: APITypes.TMessageBlock[] = [];
 
             if (mentionIds)
                   for (const mentionId of mentionIds)
                         serializedMessage.push(...this.getMentionBlock(mentionId));
 
-            const [messageWithoutMarkdownLinks, markdownLinks] = MessageService.replaceMarkdownLinks(message);
+            const [messageWithoutMarkdownLinks, markdownLinks] = VkplMessageParser.replaceMarkdownLinks(message);
             const splitedMessage: string[] = messageWithoutMarkdownLinks.split(" ");
             let textStack: string = "";
 
@@ -120,8 +103,8 @@ export class MessageService {
             ];
       }
 
-      public static deserializeMessage(message: APITypes.TMessageBlock[]): TVKPLMessageClient.DeserializedMessage {
-            const deserializedMessage: TVKPLMessageClient.DeserializedMessage = {
+      public static deserialize(message: APITypes.TMessageBlock[]): VKPLClientInternal.DeserializedMessage {
+            const deserializedMessage: VKPLClientInternal.DeserializedMessage = {
                   smiles: [],
                   text: "",
                   mentions: [],

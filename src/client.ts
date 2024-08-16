@@ -1,21 +1,21 @@
 import EventEmitter from "events";
 import { APITypes } from "./types/api.js";
-import { MessageService } from "./services/MessageService.js";
-import { TVKPLMessageClient } from "./types/internal.js";
+import { VkplMessageParser } from "./services/VkplMessageParser.js";
+import { VKPLClientInternal } from "./types/internal.js";
 import { MapApiToClient } from "./services/MapApiToLibService.js";
 import { CentrifugeClient } from "./services/CentrifugeClient.js";
-import { VkplApi } from "./services/VKPLApiService.js";
 import { VkWsTypes } from "./types/api.v2.js";
+import { VkplApi } from "./services/VkplApi.js";
 
 declare interface VKPLMessageClient<T extends string> {
       /**
        * Событие о новом сообщении в каналах трансляции 
        */
-      on(event: 'message', listener: TVKPLMessageClient.MessageEvent): this;
+      on(event: 'message', listener: VKPLClientInternal.MessageEvent): this;
       /**
        * Событие о получение награды за баллы канала
        */
-      on(event: 'reward', listener: TVKPLMessageClient.RewardEvent): this;
+      on(event: 'reward', listener: VKPLClientInternal.RewardEvent): this;
       on(event: string, listener: Function): this;
 }
 
@@ -42,46 +42,50 @@ declare interface VKPLMessageClient<T extends string> {
  */
 class VKPLMessageClient<T extends string> extends EventEmitter {
       private wsServerUrl: string = "wss://pubsub.live.vkplay.ru/connection/websocket?cf_protocol_version=v2";
-      private authToken: string = "";
-      private credentials?: {
-            login: string,
-            password: string,
-      };
+
+      private auth?: VKPLClientInternal.TokenAuth;
+      private credentials?: VKPLClientInternal.LoginAuth;
+
       /**
-       * @param debugLog - Если true, то будет выводить логи вебсокета и API в консоль
+       * @property debugLog - Если true, то будет выводить логи вебсокета и API в консоль
       */
       public static debugLog: boolean;
 
       private centrifugeClient: CentrifugeClient;
-      private messageService: MessageService;
+      private messageParser: VkplMessageParser;
 
-      private _channels: T[];
+      private channelNames: T[];
 
       /**
-      * @param channels - Список каналов
+      * @property channels - Список каналов
       */
-      public channels: TVKPLMessageClient.Channel[] = [];
+      public channels: VKPLClientInternal.Channel[] = [];
 
       /**
       * @availableSmiles - Список доступных смайлов для акаунта бота
       */
       public availableSmiles: Map<string, string> = new Map();
 
-      constructor(private config: TVKPLMessageClient.Config<T>) {
+      public api: VkplApi;
+
+      constructor(private config: VKPLClientInternal.Config<T>) {
             super();
 
             VKPLMessageClient.debugLog = config.debugLog ?? false;
 
             if (config.auth && config.auth !== "readonly") {
-                  this.authToken = "token" in config.auth ? config.auth.token : "";
+                  if ("accessToken" in config.auth)
+                        this.auth = config.auth;
 
                   if ("login" in config.auth)
-                        this.credentials = { ...config.auth };
+                        throw new TypeError("VKPLMessageClient: login and password are deprecated. Use accessToken instead");
             }
 
-            this._channels = config.channels;
+            this.messageParser = new VkplMessageParser(this.availableSmiles);
+            this.api = new VkplApi(this.messageParser, this.auth);
+            this.channelNames = config.channels;
             this.wsServerUrl = config.wsServer ?? this.wsServerUrl;
-            this.centrifugeClient = new CentrifugeClient(this.wsServerUrl);
+            this.centrifugeClient = new CentrifugeClient(this.wsServerUrl, this.api);
 
             this.centrifugeClient.on("message", (message) => this.onMessage(message));
             this.centrifugeClient.on("reward", (data) => this.onReward(data));
@@ -89,36 +93,44 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
       }
 
       private onMessage(message: VkWsTypes.WsMessage<VkWsTypes.ChatMessage>): void {
-            const channel: TVKPLMessageClient.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
+            const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
 
+            // skip message since we are not subscribed to this channel
             if (channel == undefined)
                   return;
 
-            const mappedMessage: TVKPLMessageClient.ChatMessage = MapApiToClient.chatMessageFromApi(message.push.pub.data, channel);
-            const ctx: TVKPLMessageClient.MessageEventContext = {
+            const mappedMessage: VKPLClientInternal.ChatMessage = MapApiToClient.chatMessageFromApi(message.push.pub.data, channel);
+            const ctx: VKPLClientInternal.MessageEventContext = {
                   ...mappedMessage,
-                  sendMessage: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers),
-                  reply: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers ? [...mentionUsers, mappedMessage.user.id] : [mappedMessage.user.id]),
-                  replyToThread: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers, mappedMessage.id),
+                  sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers),
+                  reply: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers ? [...mentionUsers, mappedMessage.user.id] : [mappedMessage.user.id]),
+                  replyToThread: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers, mappedMessage.id),
+                  api: this.api,
             };
             this.emit("message", ctx);
             console.log(`[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`);
       }
 
       private onReward(message: VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>): void {
-            const channel: TVKPLMessageClient.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
+            const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
 
+            // skip message since we are not subscribed to this channel
             if (channel == undefined)
                   return;
 
-            const reward: TVKPLMessageClient.RewardMessage = MapApiToClient.rewardMessageFromApi(message.push.pub.data, channel);
-            const ctx: TVKPLMessageClient.RewardEventContext = {
+            const reward: VKPLClientInternal.RewardMessage = MapApiToClient.rewardMessageFromApi(message.push.pub.data, channel);
+            const ctx: VKPLClientInternal.RewardEventContext = {
                   ...reward,
-                  sendMessage: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, reward.channel.blogUrl as T, mentionUsers),
-                  reply: async (text: string, mentionUsers?: number[]) => this.sendMessage(text, reward.channel.blogUrl as T, mentionUsers ? [...mentionUsers, reward.user.id] : [reward.user.id]),
+                  sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, reward.channel.blogUrl as T, mentionUsers),
+                  reply: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, reward.channel.blogUrl as T, mentionUsers ? [...mentionUsers, reward.user.id] : [reward.user.id]),
+                  api: this.api,
             };
             this.emit("reward", ctx);
             console.log(`[reward:${channel.blogUrl}] ${reward.user.nick} reedemed reward: "${reward.reward.name}" ${reward.reward.message ? `with text "${reward.reward.message.text}"` : ""}`);
+      }
+
+      private async onReconnect(): Promise<void> {
+            await this.connectToChats();
       }
 
       /**
@@ -127,7 +139,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
        * Возвращает данные канала c API по имени.
        * Поск происходит по каналам, указанным в конфиге
        */
-      public findChannelById(id: string): TVKPLMessageClient.Channel | undefined {
+      public findChannelById(id: string): VKPLClientInternal.Channel | undefined {
             return this.channels.find(channel => channel.publicWebSocketChannel === id);
       }
 
@@ -137,7 +149,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
        * Возвращает данные канала c API по имени.
        * Поск происходит по каналам, указанным в конфиге
        */
-      public findChannelByName(name: string): TVKPLMessageClient.Channel | undefined {
+      public findChannelByName(name: string): VKPLClientInternal.Channel | undefined {
             return this.channels.find(channel => channel.blogUrl === name);
       }
 
@@ -145,10 +157,11 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             for (const channel of this.channels) {
                   try {
                         await this.centrifugeClient.connectToChat(channel);
-                        const wsSubscribeToken = await VkplApi.getWebSocketSubscriptionToken(this.authToken, [channel.publicWebSocketChannel]);
+                        const wsSubscribeToken = await this.api.getWebSocketSubscriptionToken([channel.publicWebSocketChannel]);
 
                         if (!wsSubscribeToken.data.tokens.length)
-                              throw new Error("Failed to obtain websocket subscribe token for reward channel: " + channel.blogUrl + "\n Connect to reward channel will be skipped");
+                              throw new Error(`Failed to obtain websocket subscribe token for reward channel: ${channel.blogUrl}
+Connect to reward channel will be skipped`);
 
                         await this.centrifugeClient.connectToReedem(channel, wsSubscribeToken.data.tokens[0]?.token ?? "");
                   } catch (error) {
@@ -157,18 +170,16 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             }
       }
 
-      private async onReconnect(): Promise<void> {
-            await this.connectToChats();
-      }
-
       private async obtainToken(): Promise<void> {
             if (!this.credentials)
-                  return;
+                  throw new TypeError("Credentials must be provided to obtain token");
 
-            const token = await VkplApi.getToken(this.credentials.login, this.credentials.password);
+            const token = await VkplApi.login(this.credentials.login, this.credentials.password);
 
-            if (token.accessToken)
-                  this.authToken = token.accessToken;
+            if (token.accessToken) {
+                  this.auth = token;
+                  this.api.auth = token;
+            }
       }
 
       /**
@@ -176,19 +187,18 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
       * Необходимо вызвать этот метод, если вы хотите, чтобы бот получал сообщения
       */
       public async connect(): Promise<void> {
-            if (!this.authToken && this.credentials) {
+            if (!this.auth && this.credentials) {
                   await this.obtainToken();
             }
 
-            for (const channelName of this._channels) {
-                  const channel: TVKPLMessageClient.Channel = MapApiToClient.channelFromBlogResponse(await VkplApi.getBlog(channelName));
+            for (const channelName of this.channelNames) {
+                  const channel: VKPLClientInternal.Channel = MapApiToClient.channelFromBlogResponse(await this.api.getBlog(channelName));
                   this.channels.push(channel);
             }
 
-            if (this.config.auth && this.config.auth !== "readonly")
-                  await this.initMessageService();
+            if (this.config.auth !== "readonly")
+                  await this.populateMessageParserWithSmiles();
 
-            this.centrifugeClient.wsToken = this.authToken;
             await this.centrifugeClient.connect();
             await this.connectToChats();
       }
@@ -198,9 +208,9 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             this.centrifugeClient.removeAllListeners();
       }
 
-      private async initMessageService(): Promise<void> {
-            if (this.authToken !== "" && this.channels.length) {
-                  const smilesSet: APITypes.TSmilesResponse = await VkplApi.getSmilesSet(this.authToken, this.channels[0].blogUrl);
+      private async populateMessageParserWithSmiles(): Promise<void> {
+            if (this.auth && this.channels.length) {
+                  const smilesSet: APITypes.TSmilesResponse = await this.api.getSmilesSet(this.channels[0].blogUrl);
 
                   if (VKPLMessageClient.debugLog)
                         console.warn("[debug:chat] Get smiles set", JSON.stringify(smilesSet, null, 5))
@@ -208,8 +218,6 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
                   for (const set of smilesSet.data.sets)
                         for (const smile of set.smiles)
                               this.availableSmiles.set(smile.name, smile.id);
-
-                  this.messageService = new MessageService(this.authToken, this.availableSmiles);
             }
             else {
                   throw new Error("[chat] Cannot get list of smiles because of no auth token nor channels provided");
@@ -224,18 +232,17 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
       * @return {Promise<APITypes.TMessageResponse>} Ответ API на сообщение
       *
       * Позволяет отправлять сообщение в чат трансляции без подключения к чату. Нужно лишь указать канал, куда будет отправлено сообщение
+      *
+      * @deprecated Используйте `client.api.sendMessage` вместо `client.sendMessage`
       */
       public async sendMessage(message: string, channel: T, mentionUserId?: number[], threadId?: number): Promise<APITypes.TMessageResponse> {
             if (!this.config.auth || this.config.auth === "readonly")
+                  throw new Error("You must provide auth token or credentials. Current mode is readonly");
+
+            if (!this.auth)
                   throw new Error("You must provide auth token or credentials");
 
-            if (!this.messageService)
-                  throw new Error("You must call connect() first");
-
-            if (!this.authToken)
-                  throw new Error("You must provide auth token or credentials");
-
-            return this.messageService.sendMessage(message, channel, mentionUserId, threadId);
+            return this.api.sendMessage(message, channel, mentionUserId, threadId);
       }
 }
 

@@ -1,16 +1,37 @@
+import { VkplApi } from "../services/VkplApi.js";
 import { APITypes } from "./api.js";
 import { VkWsTypes } from "./api.v2.js";
 
-export namespace TVKPLMessageClient {
+export namespace VKPLClientInternal {
       export type Smile = { id: string, name: string }
+
+      export type AccessTokenAuth = {
+            accessToken: string,
+      }
+
+      export type WithRefreshToken<T extends Record<string, unknown>> = {
+            refreshToken: string,
+            expiresAt: number,
+      } & T;
+
+      export type TokenAuth = AccessTokenAuth | WithRefreshToken<AccessTokenAuth>;
+
+      /**
+       * @deprecated Vkpl усложнил процесс получения токена по логину и паролю. Поэтому данный функционал временно не работает.
+       * При попытке использовать эту функцию, будет выдана ошибка.
+       */
+      export type LoginAuth = {
+            login: string,
+            password: string
+      }
+
+      export type ReadonlyAuth = "readonly" | undefined;
+
+      export type Auth = TokenAuth | LoginAuth | ReadonlyAuth;
+
       export type Config<T extends string> = {
             channels: T[],
-            auth?: {
-                  token: string,
-            } | {
-                  login: string,
-                  password: string
-            } | "readonly",
+            auth: Auth,
             wsServer?: string,
             debugLog?: boolean,
       };
@@ -77,9 +98,13 @@ export namespace TVKPLMessageClient {
             smallUrl: string
       };
 
+      export type Context = {
+            api: VkplApi,
+      }
+
       export type MessageEvent = (messageContext: MessageEventContext) => void;
 
-      export type MessageEventContext = ChatMessage & {
+      export type MessageEventContext = Context & ChatMessage & {
             /**
             * Отправить сообещние в канал
             */
@@ -116,7 +141,7 @@ export namespace TVKPLMessageClient {
 
       export type RewardEvent = (rewardContext: RewardEventContext) => void;
 
-      export type RewardEventContext = RewardMessage & {
+      export type RewardEventContext = Context & RewardMessage & {
             /**
             * Отправить сообещние в канал
             */
