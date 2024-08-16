@@ -12,6 +12,7 @@ export namespace VKPLClientInternal {
       export type WithRefreshToken<T extends Record<string, unknown>> = {
             refreshToken: string,
             expiresAt: number,
+            clientId: string,
       } & T;
 
       export type TokenAuth = AccessTokenAuth | WithRefreshToken<AccessTokenAuth>;
@@ -173,4 +174,8 @@ export namespace VKPLClientInternal {
             */
             sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
       }
+
+      export type RefreshTokenEvent = (refreshTokenContext: RefreshTokenEventContext) => void;
+
+      export type RefreshTokenEventContext = Context & TokenAuth;
 }

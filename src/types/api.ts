@@ -15,6 +15,13 @@ export namespace APITypes {
             refreshToken: string,
             expiresAt: number
       }
+
+      export type RefreshedTokenResponse = {
+            "expires_in": number,
+            "refresh_token": string,
+            "access_token": string,
+      }
+
       export type TBlogResponse = {
             publicWebSocketChannel: string,
             owner: TUser,
