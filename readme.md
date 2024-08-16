@@ -60,10 +60,10 @@ client.on("reward", async (ctx) => {
 > У вас должен быть файл `token.json` с содержимым в следующем виде: 
 ```json
 { 
-    accessToken: "token", 
-    refreshToken: "refreshToken",
-    expiresAt: 12345,
-    clientId: "clientId" 
+    "accessToken": "token", 
+    "refreshToken": "refreshToken",
+    "expiresAt": 12345,
+    "clientId": "clientId" 
 }
 ```
 > Данные нужно брать из `localStorage` вашего браузера
