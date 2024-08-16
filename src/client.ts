@@ -157,6 +157,10 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             for (const channel of this.channels) {
                   try {
                         await this.centrifugeClient.connectToChat(channel);
+
+                        if (!this.auth)
+                              continue; // can't connect to rewards without token
+
                         const wsSubscribeToken = await this.api.getWebSocketSubscriptionToken([channel.publicWebSocketChannel]);
 
                         if (!wsSubscribeToken.data.tokens.length)
