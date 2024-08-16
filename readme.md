@@ -171,6 +171,7 @@ client.on("stream-status", async (ctx) => {
 
       if (ctx.type === "stream_end")
           await ctx.sendMessage("Stream stopped!");
+});
 ```
 
 ### Информация о канале
