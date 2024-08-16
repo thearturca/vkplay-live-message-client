@@ -3,7 +3,7 @@ import { VkplMessageParser } from "./VkplMessageParser.js";
 import type { APITypes } from "../types/api.js";
 
 describe("Message service", () => {
-      const messageService = new VkplMessageParser("token", new Map<string, string>([["Tlen", "6cbbcf8a-58cc-4afb-857a-e3f89f6049a6"]]));
+      const messageService = new VkplMessageParser(new Map<string, string>([["Tlen", "6cbbcf8a-58cc-4afb-857a-e3f89f6049a6"]]));
 
       test("serialize message", () => {
             const message = "это паста Tlen Tlen RatJam RatJam https://github.com/ [скрытая ссылка](https://boosty.to) [скрытая ссылка 2](https://boosty.to) [](https://boosty.to)";
