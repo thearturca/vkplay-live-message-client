@@ -26,7 +26,7 @@ npm i vklive-message-client
 ```TS            
 const authToken: string = process.env.VKPL_OAUTH ?? "";
 
-const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+const client = new VKPLMessageClient({ auth: { accessToken: authToken }, channels: [target], debugLog: true });
 await client.connect();
 await client.sendMessage("Connected to chat!", target);
 
@@ -87,7 +87,7 @@ await client.connect(); // После подключения все сообще
 
 #### Пример вставки ссылки
 ```TS
-const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+const client = new VKPLMessageClient({ auth: { accessToken: authToken }, channels: [target], debugLog: true });
 await client.connect();
 
 // отправки прямой ссылки
@@ -100,7 +100,7 @@ await client.sendMessage("[Ссылка на мой гитхаб](https://github
 ### Получение наград
 Возможность получение уведомление об активации награды зрителем.
 ```TS
-const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+const client = new VKPLMessageClient({ auth: { accessToken: authToken }, channels: [target], debugLog: true });
 await client.connect();
 
 client.on("reward", async (ctx) => {
@@ -112,7 +112,7 @@ client.on("reward", async (ctx) => {
 ### Статус стрима
 Возможность получить событие о запуске/остановке стрима.
 ```TS
-const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+const client = new VKPLMessageClient({ auth: { accessToken: authToken }, channels: [target], debugLog: true });
 await client.connect();
 
 client.on("stream-status", async (ctx) => {
@@ -126,7 +126,7 @@ client.on("stream-status", async (ctx) => {
 ### Информация о канале
 Возможность получать изменения в информации о канале, такие как название, категория, зрители и т.д.
 ```TS
-const client = new VKPLMessageClient({ auth: { token: authToken }, channels: [target], debugLog: true });
+const client = new VKPLMessageClient({ auth: { accessToken: authToken }, channels: [target], debugLog: true });
 await client.connect();
 
 client.on("channel-info", async (ctx) => {
