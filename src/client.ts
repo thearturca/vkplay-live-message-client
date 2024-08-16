@@ -16,6 +16,14 @@ declare interface VKPLMessageClient<T extends string> {
        * Событие о получение награды за баллы канала
        */
       on(event: 'reward', listener: VKPLClientInternal.RewardEvent): this;
+      /**
+       * Событие о получении информации о канале таких как название, категория, зрители и т.д.
+       */
+      on(event: 'channel-info', listener: VKPLClientInternal.ChannelInfoEvent): this;
+      /**
+       * Событие о получении статуса канала. Если начался трансляция или остановилась
+       */
+      on(event: 'stream-status', listener: VKPLClientInternal.StreamStatusEvent): this;
       on(event: string, listener: Function): this;
 }
 
@@ -89,6 +97,8 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
 
             this.centrifugeClient.on("message", (message) => this.onMessage(message));
             this.centrifugeClient.on("reward", (data) => this.onReward(data));
+            this.centrifugeClient.on("channel-info", (data) => this.onChannelInfo(data));
+            this.centrifugeClient.on("stream-status", (data) => this.onStreamStatus(data));
             this.centrifugeClient.on("reconnect", () => this.onReconnect());
       }
 
@@ -129,6 +139,42 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             console.log(`[reward:${channel.blogUrl}] ${reward.user.nick} reedemed reward: "${reward.reward.name}" ${reward.reward.message ? `with text "${reward.reward.message.text}"` : ""}`);
       }
 
+      private onChannelInfo(message: VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>): void {
+            const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
+
+            // skip message since we are not subscribed to this channel
+            if (channel == undefined)
+                  return;
+
+            const channelInfo = message.push.pub.data;
+            const ctx: VKPLClientInternal.ChannelInfoEventContext = {
+                  ...channelInfo,
+                  api: this.api,
+                  sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, channel.blogUrl as T, mentionUsers),
+            };
+
+            this.emit("channel-info", ctx);
+            console.log(`[channelInfo:${channel.blogUrl}] viewers: ${channelInfo.viewers}, isOnline: ${channelInfo.isOnline}, streamId: ${channelInfo.streamId}`);
+      }
+
+      private onStreamStatus(message: VkWsTypes.WsMessage<VkWsTypes.StreamStatus>): void {
+            const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
+
+            // skip message since we are not subscribed to this channel
+            if (channel == undefined)
+                  return;
+
+            const streamStatus = message.push.pub.data;
+            const ctx: VKPLClientInternal.StreamStatusEventContext = {
+                  ...streamStatus,
+                  api: this.api,
+                  sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, channel.blogUrl as T, mentionUsers),
+            };
+
+            this.emit("stream-status", ctx);
+            console.log(`[streamStatus:${channel.blogUrl}] ${streamStatus.type}, videoId: ${streamStatus.videoId}`);
+      }
+
       private async onReconnect(): Promise<void> {
             await this.connectToChats();
       }
@@ -157,6 +203,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             for (const channel of this.channels) {
                   try {
                         await this.centrifugeClient.connectToChat(channel);
+                        await this.centrifugeClient.connectToChannelInfo(channel);
 
                         if (!this.auth)
                               continue; // can't connect to rewards without token

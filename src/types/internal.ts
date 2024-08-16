@@ -155,4 +155,22 @@ export namespace VKPLClientInternal {
             */
             reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
       }
+
+      export type ChannelInfoEvent = (channelInfoContext: ChannelInfoEventContext) => void;
+
+      export type ChannelInfoEventContext = Context & VkWsTypes.ChannelInfo & {
+            /**
+            * Отправить сообещние в канал
+            */
+            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
+      }
+
+      export type StreamStatusEvent = (streamStatusContext: StreamStatusEventContext) => void;
+
+      export type StreamStatusEventContext = Context & VkWsTypes.StreamStatus & {
+            /**
+            * Отправить сообещние в канал
+            */
+            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
+      }
 }
