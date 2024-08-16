@@ -1,14 +1,14 @@
 import { describe, expect, test } from "vitest";
-import { MessageService } from "./MessageService.js";
+import { VkplMessageParser } from "./VkplMessageParser.js";
 import type { APITypes } from "../types/api.js";
 
 describe("Message service", () => {
-      const messageService = new MessageService("token", new Map<string, string>([["Tlen", "6cbbcf8a-58cc-4afb-857a-e3f89f6049a6"]]));
+      const messageService = new VkplMessageParser("token", new Map<string, string>([["Tlen", "6cbbcf8a-58cc-4afb-857a-e3f89f6049a6"]]));
 
       test("serialize message", () => {
             const message = "это паста Tlen Tlen RatJam RatJam https://github.com/ [скрытая ссылка](https://boosty.to) [скрытая ссылка 2](https://boosty.to) [](https://boosty.to)";
 
-            expect(messageService.serializeMessage(message)).toEqual([
+            expect(messageService.serialize(message)).toEqual([
                   {
                         type: 'text',
                         content: '["это паста ","unstyled",[]]',
@@ -152,7 +152,7 @@ describe("Message service", () => {
                   },
             ] satisfies APITypes.TMessageBlock[];
 
-            const deserializedMessage = MessageService.deserializeMessage(message);
+            const deserializedMessage = VkplMessageParser.deserialize(message);
             expect(deserializedMessage.text).toEqual("это паста Tlen Tlen RatJam RatJam https://github.com/ скрытая ссылка скрытая ссылка 2 https://boosty.to");
             expect(deserializedMessage.smiles.length).toEqual(2);
             expect(deserializedMessage.mentions.length).toEqual(0);

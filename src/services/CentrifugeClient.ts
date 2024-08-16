@@ -1,8 +1,8 @@
 import WebSocket from "ws";
 import EventEmitter from "events";
 import { VkWsTypes } from "../types/api.v2.js";
-import { TVKPLMessageClient } from "../types/internal.js";
-import { VkplApi } from "./VKPLApiService.js";
+import { VKPLClientInternal } from "../types/internal.js";
+import { VkplApi } from "./VkplApi.js";
 import VKPLMessageClient from "../index.js";
 
 export declare interface CentrifugeClient {
@@ -16,9 +16,11 @@ export class CentrifugeClient extends EventEmitter {
       private socket: WebSocket;
       private currentMethodId: number = 0;
       private methods: vkplWsMethod<unknown>[] = [];
-      public wsToken: string | undefined;
 
-      constructor(private wsServerUrl: string) {
+      constructor(
+            private wsServerUrl: string,
+            private api: VkplApi,
+      ) {
             super();
       }
 
@@ -50,7 +52,7 @@ export class CentrifugeClient extends EventEmitter {
       public async onOpen(_: WebSocket.Event): Promise<void> {
             console.log("[open] Initializing connection to live.vkplay.ru websocket");
 
-            const wsToken = await VkplApi.getWebSocketConnectToken(this.wsToken);
+            const wsToken = await this.api.getWebSocketConnectToken();
 
             if (VKPLMessageClient.debugLog)
                   console.warn("[debug:websocket] get websocket token", JSON.stringify(wsToken, null, 5))
@@ -68,7 +70,7 @@ export class CentrifugeClient extends EventEmitter {
             this.emit("open");
       }
 
-      private checkMethod<T extends Record<string, unknown>>(wsMessage: VkWsTypes.WsMethodResponse<T>): void {
+      private resolveMethod<T extends Record<string, unknown>>(wsMessage: VkWsTypes.WsMethodResponse<T>): void {
             const methodIndex: number = this.methods.findIndex(method => method.id === wsMessage.id);
 
             if (methodIndex === -1)
@@ -99,21 +101,21 @@ export class CentrifugeClient extends EventEmitter {
             });
       }
 
-      public async connectToChat(channel: TVKPLMessageClient.Channel): Promise<unknown> {
-            const connectToChatPaylod: VkWsTypes.Method<VkWsTypes.SubscribeMethod> = {
+      public async connectToChat(channel: VKPLClientInternal.Channel): Promise<unknown> {
+            const paylod: VkWsTypes.Method<VkWsTypes.SubscribeMethod> = {
                   "subscribe": {
                         "channel": `public-chat:${channel.publicWebSocketChannel}`
                   },
                   "id": 0
             };
             console.log(`[chat:${channel.blogUrl}] Connecting to channel chat...`)
-            const res = await this.invokeMethod(connectToChatPaylod);
+            const res = await this.invokeMethod(paylod);
             console.log(`[chat:${channel.blogUrl}] Connected to channel chat`);
             return res;
       }
 
-      public async connectToReedem(channel: TVKPLMessageClient.Channel, wsSubscribeToken: string): Promise<unknown> {
-            const connectToReedemPaylod: VkWsTypes.Method<VkWsTypes.SubscribeMethod> = {
+      public async connectToReedem(channel: VKPLClientInternal.Channel, wsSubscribeToken: string): Promise<unknown> {
+            const paylod: VkWsTypes.Method<VkWsTypes.SubscribeMethod> = {
                   "subscribe": {
                         "channel": `channel-info-manage:${channel.publicWebSocketChannel}`,
                         "token": wsSubscribeToken,
@@ -122,7 +124,7 @@ export class CentrifugeClient extends EventEmitter {
             };
 
             console.log(`[chat:${channel.blogUrl}] Connecting to channel reedem...`)
-            const res = await this.invokeMethod(connectToReedemPaylod);
+            const res = await this.invokeMethod(paylod);
             console.log(`[chat:${channel.blogUrl}] Connected to channel reedem`);
             return res;
       }
@@ -139,7 +141,7 @@ export class CentrifugeClient extends EventEmitter {
                   console.warn("[debug:websocket] new message", JSON.stringify(data, null, 4));
 
             if ("id" in data)
-                  this.checkMethod(data as VkWsTypes.WsMethodResponse<{}>);
+                  this.resolveMethod(data as VkWsTypes.WsMethodResponse<{}>);
 
             const chatMessage = data as VkWsTypes.WsMessage<VkWsTypes.ChatMessage>;
 

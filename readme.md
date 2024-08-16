@@ -42,6 +42,9 @@ client.on("reward", async (ctx) => {
 ```
 
 ### Логин и Пароль
+
+> Данный способ не работает. Лучше использовать токен
+
 ```TS
 const login: string = process.env.VKPL_LOGIN ?? "";
 const password: string = process.env.VKPL_PASSWORD ?? "";
