@@ -1,4 +1,3 @@
-import { randomUUID } from "crypto";
 import { CookieAgent } from "http-cookie-agent/undici";
 import { CookieJar } from "tough-cookie";
 
@@ -7,14 +6,20 @@ import { APITypes } from "../types/api.js";
 import { HTTPMethod } from "../types/http.js";
 import { VKPLClientInternal } from "../types/internal.js";
 import { VkplMessageParser } from "./VkplMessageParser.js";
+import EventEmitter from "events";
 
-export class VkplApi {
+export declare interface VkplApi {
+      on(event: 'refreshed', listener: (token: VKPLClientInternal.TokenAuth) => void): this;
+      on(event: string, listener: Function): this;
+}
+
+export class VkplApi extends EventEmitter {
       constructor(
             private messageParser: VkplMessageParser,
             public auth?: VKPLClientInternal.TokenAuth,
             protected readonly baseUrl: string = "https://api.live.vkplay.ru/v1",
       ) {
-
+            super();
       }
 
       protected addAuthorizationHeader(headers: Headers) {
@@ -23,6 +28,9 @@ export class VkplApi {
 
             if (!headers.has("Authorization"))
                   headers.append("Authorization", `Bearer ${this.auth.accessToken}`);
+
+            if ("clientId" in this.auth)
+                  headers.append("X-From-Id", this.auth.clientId);
       }
 
       public async getSmilesSet<T extends string>(channel: T): Promise<APITypes.TSmilesResponse> {
@@ -53,9 +61,7 @@ export class VkplApi {
       }
 
       public async getWebSocketConnectToken(): Promise<APITypes.TokenResponse> {
-            const headers = new Headers({ "X-From-Id": randomUUID() });
-
-            const res = await this.httpRequest<APITypes.TokenResponse>(`/ws/connect`, "GET", undefined, undefined, headers);
+            const res = await this.httpRequest<APITypes.TokenResponse>(`/ws/connect`, "GET");
 
             if (typeof res === "string")
                   throw new Error(res);
@@ -165,6 +171,64 @@ export class VkplApi {
             return parsedToken;
       }
 
+      public static readonly tokenExpiresShift = 10 * 60 * 1000; // 10 min
+
+      public isTokenExpired(): boolean {
+            if (!this.auth)
+                  return false;
+
+            if (!("expiresAt" in this.auth))
+                  return false;
+
+            return this.auth.expiresAt - VkplApi.tokenExpiresShift < Date.now();
+      }
+
+      public async refreshToken(): Promise<VKPLClientInternal.TokenAuth> {
+            if (!this.auth)
+                  throw new TypeError("Auth must be provided to refresh token");
+
+            if (!("refreshToken" in this.auth))
+                  throw new TypeError("Refresh token must be provided to refresh token");
+
+            const body = new URLSearchParams({
+                  response_type: "code",
+                  refresh_token: this.auth.refreshToken,
+                  grant_type: "refresh_token",
+                  device_id: this.auth.clientId,
+                  device_os: "streams_web",
+            });
+
+            const res = await fetch("https://api.live.vkplay.ru/oauth/token/", {
+                  "method": "POST",
+                  body: body.toString(),
+                  headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        "origin": "https://live.vkplay.ru",
+                        "referer": "https://live.vkplay.ru",
+                        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+                  }
+            });
+
+            if (!res.ok)
+                  throw new Error("[api] Cannot refresh token", { cause: await res.text() });
+
+            const refreshedToken = (await res.json()) as APITypes.RefreshedTokenResponse;
+
+            const token = {
+                  accessToken: refreshedToken.access_token,
+                  refreshToken: refreshedToken.refresh_token,
+                  expiresAt: Date.now() + refreshedToken.expires_in * 1000,
+            };
+
+            this.auth.accessToken = token.accessToken;
+            this.auth.refreshToken = token.refreshToken;
+            this.auth.expiresAt = token.expiresAt;
+
+            this.emit("refreshed", token);
+
+            return token;
+      }
+
       protected async httpRequest<T>(
             endpoint: `/${string}`,
             method: HTTPMethod,
@@ -172,6 +236,9 @@ export class VkplApi {
             body?: string | FormData,
             headers: Headers = new Headers(),
       ): Promise<T | string> {
+            if (this.isTokenExpired())
+                  await this.refreshToken();
+
             this.addAuthorizationHeader(headers);
 
             const response = await fetch(`${this.baseUrl}${endpoint}?${new URLSearchParams(query)}`, {

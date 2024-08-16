@@ -10,6 +10,15 @@
 Для отправки сообщений нужно указать токен live.vkplay.ru, либо авторизационные данные для входа (логин и пароль). 
 Так как ещё нет легального удобного способа получить токен, его нужно взять из localStorage вашего браузера, если вы уже залогинены. Находиться в поле `auth`. Лучше всего создать новый аккаунт для бота. Если вы знаете, как достать токен, сообщите мне в discord. 
 
+Иструкция по получению токена с реферешом [live.vkplay.ru](https://live.vkplay.ru):
+1. Откройте окно браузера в режиме инкогнито
+2. Перейдите на страничку [live.vkplay.ru](https://live.vkplay.ru)
+3. Нажмите на кнопку `Вход` и залогиньтесь
+4. Обновите страницу
+5. Нажмите `Ctrl+Shift+I`, перейдите в вкладку Application. Слева нажмите на `Local Storage`. 
+6. Найдите в столбце `Key` значение `auth`. Скопируйте `accessToken`, `refreshToken` и `expiresAt`. Это можно будет вставить в поле `auth` в вашем боте.
+7. Найдите в столбце `Key` значение `_clientId`. Скопируйте значение. Это будет `clientId` для бота.
+
 `Discord для вопросов: thearturca`
 
 ## [Поддержи проект на бусти!](https://boosty.to/thearturca/single-payment/donation/495699/target?share=target_link)
@@ -24,7 +33,11 @@ npm i vklive-message-client
 
 ### Токен
 ```TS            
-const authToken: string = process.env.VKPL_OAUTH ?? "";
+const authToken: string = process.env.VKPL_OAUTH;
+
+if (!authToken) {
+    throw new Error("VKPL_OAUTH is not set");
+}
 
 const client = new VKPLMessageClient({ auth: { accessToken: authToken }, channels: [target], debugLog: true });
 await client.connect();
@@ -38,6 +51,42 @@ client.on("message", async (ctx) => {
 client.on("reward", async (ctx) => {
       if (ctx.reward.name === "reward_name")
           await ctx.sendMessage("Reward received!"); 
+});
+```
+
+### Токен + Рефреш токен с сохранением в файл
+
+> [!NOTE]
+> У вас должен быть файл `token.json` с содержимым в следующем виде: 
+> ```json
+> { 
+>     "accessToken": "token", 
+>     "refreshToken": "refreshToken",
+>     "expiresAt": 12345,
+>     "clientId": "clientId" 
+> }
+> ```
+> Данные нужно брать из `localStorage` вашего браузера
+
+```TS            
+const auth = JSON.parse(await fs.promises.readFile("token.json", "utf8")); // должен иметь следующий вид: { accessToken: "token", refreshToken: "refreshToken", expiresAt: 12345, clientId: "clientId" }
+
+const client = new VKPLMessageClient({ auth: auth, channels: [target], debugLog: true });
+await client.connect();
+await client.sendMessage("Connected to chat!", target);
+
+client.on("message", async (ctx) => {
+      if (ctx.message.text.startsWith("!command"))
+            await ctx.sendMessage("Hello World");
+});
+
+client.on("reward", async (ctx) => {
+      if (ctx.reward.name === "reward_name")
+          await ctx.sendMessage("Reward received!"); 
+});
+
+client.on("refresh-token", async (ctx) => {
+   await fs.promises.writeFile("token.json", JSON.stringify(ctx.auth)); 
 });
 ```
 

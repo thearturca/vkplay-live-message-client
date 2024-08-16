@@ -24,6 +24,11 @@ declare interface VKPLMessageClient<T extends string> {
        * Событие о получении статуса канала. Если начался трансляция или остановилась
        */
       on(event: 'stream-status', listener: VKPLClientInternal.StreamStatusEvent): this;
+
+      /**
+       * Событие о получении нового токена. Понадобится для сохранения нового токена, и восстановления работы бота без надобности идти на сайт
+       */
+      on(event: 'refresh-token', listener: VKPLClientInternal.RefreshTokenEvent): this;
       on(event: string, listener: Function): this;
 }
 
@@ -91,6 +96,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
 
             this.messageParser = new VkplMessageParser(this.availableSmiles);
             this.api = new VkplApi(this.messageParser, this.auth);
+            this.api.on("refreshed", (token) => this.onRefreshToken(token));
             this.channelNames = config.channels;
             this.wsServerUrl = config.wsServer ?? this.wsServerUrl;
             this.centrifugeClient = new CentrifugeClient(this.wsServerUrl, this.api);
@@ -100,6 +106,17 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             this.centrifugeClient.on("channel-info", (data) => this.onChannelInfo(data));
             this.centrifugeClient.on("stream-status", (data) => this.onStreamStatus(data));
             this.centrifugeClient.on("reconnect", () => this.onReconnect());
+      }
+
+      private onRefreshToken(token: VKPLClientInternal.TokenAuth): void {
+            this.auth = token;
+
+            const ctx: VKPLClientInternal.RefreshTokenEventContext = {
+                  auth: token,
+                  api: this.api,
+            };
+
+            this.emit("refresh-token", ctx);
       }
 
       private onMessage(message: VkWsTypes.WsMessage<VkWsTypes.ChatMessage>): void {
