@@ -214,10 +214,11 @@ export class VkplApi extends EventEmitter {
 
             const refreshedToken = (await res.json()) as APITypes.RefreshedTokenResponse;
 
-            const token = {
+            const token: VKPLClientInternal.WithRefreshToken<VKPLClientInternal.AccessTokenAuth> = {
                   accessToken: refreshedToken.access_token,
                   refreshToken: refreshedToken.refresh_token,
                   expiresAt: Date.now() + refreshedToken.expires_in * 1000,
+                  clientId: this.auth.clientId,
             };
 
             this.auth.accessToken = token.accessToken;
