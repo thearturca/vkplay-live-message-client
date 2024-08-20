@@ -7,8 +7,9 @@
       "type": "module",
       "scripts": {
             "test": "vitest run",
-            "build": "tsc",
-            "dev": "tsc --watch",
+            "lint": "oxlint",
+            "build": "rimraf lib && tsc --project tsconfig.build.json",
+            "dev": "tsc --watch --project tsconfig.build.json",
             "prepublishOnly": "npm run build && npm run test"
       },
       "keywords": [
@@ -42,6 +43,8 @@
             "@types/tough-cookie": "^4.0.5",
             "@types/ws": "^8.5.12",
             "nodemon": "^3.1.4",
+            "oxlint": "^0.7.2",
+            "rimraf": "^6.0.1",
             "ts-node": "^10.9.2",
             "typescript": "^5.5.4",
             "vitest": "^2.0.5"
