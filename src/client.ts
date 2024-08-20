@@ -7,28 +7,28 @@ import { VkWsTypes } from "./types/api.v2.js";
 import { VkplApi } from "./services/VkplApi.js";
 import { VkplMessageParser } from "./services/VkplMessageParser.js";
 
-type VKPLMessageClientEventMap = {
+type VKPLMessageClientEventMap<Channel extends string> = {
       /**
        * Событие о новом сообщении в каналах трансляции 
        */
-      'message': VKPLClientInternal.MessageEvent
+      'message': VKPLClientInternal.MessageEvent<Channel>
       /**
        * Событие о получение награды за баллы канала
        */
-      'reward': VKPLClientInternal.RewardEvent
+      'reward': VKPLClientInternal.RewardEvent<Channel>
       /**
        * Событие о получении информации о канале таких как название, категория, зрители и т.д.
        */
-      'channel-info': VKPLClientInternal.ChannelInfoEvent
+      'channel-info': VKPLClientInternal.ChannelInfoEvent<Channel>
       /**
        * Событие о получении статуса канала. Если начался трансляция или остановилась
        */
-      'stream-status': VKPLClientInternal.StreamStatusEvent
+      'stream-status': VKPLClientInternal.StreamStatusEvent<Channel>
 
       /**
        * Событие о получении нового токена. Понадобится для сохранения нового токена, и восстановления работы бота без надобности идти на сайт
        */
-      'refresh-token': VKPLClientInternal.RefreshTokenEvent
+      'refresh-token': VKPLClientInternal.RefreshTokenEvent<Channel>
 }
 
 /**
@@ -52,7 +52,7 @@ type VKPLMessageClientEventMap = {
  *           await ctx.replyToThread("Hello World");
  * });
  */
-class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClientEventMap> {
+class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClientEventMap<T>> {
       private wsServerUrl: string = "wss://pubsub.live.vkplay.ru/connection/websocket?cf_protocol_version=v2";
 
       private auth?: VKPLClientInternal.TokenAuth;
@@ -63,7 +63,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
       */
       public static debugLog: boolean;
 
-      private centrifugeClient: CentrifugeClient;
+      private centrifugeClient: CentrifugeClient<T>;
       private messageParser: VkplMessageParser;
 
       private channelNames: T[];
@@ -78,7 +78,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
       */
       public availableSmiles: Map<string, string> = new Map();
 
-      public api: VkplApi;
+      public api: VkplApi<T>;
 
       constructor(private config: VKPLClientInternal.Config<T>) {
             super();
@@ -110,7 +110,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
       private onRefreshToken(token: VKPLClientInternal.TokenAuth): void {
             this.auth = token;
 
-            const ctx: VKPLClientInternal.RefreshTokenEventContext = {
+            const ctx: VKPLClientInternal.RefreshTokenEventContext<T> = {
                   auth: token,
                   api: this.api,
             };
@@ -126,7 +126,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
                   return;
 
             const mappedMessage: VKPLClientInternal.ChatMessage = MapApiToClient.chatMessageFromApi(message.push.pub.data, channel);
-            const ctx: VKPLClientInternal.MessageEventContext = {
+            const ctx: VKPLClientInternal.MessageEventContext<T> = {
                   ...mappedMessage,
                   sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers),
                   reply: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, mappedMessage.channel.blogUrl as T, mentionUsers ? [...mentionUsers, mappedMessage.user.id] : [mappedMessage.user.id]),
@@ -145,7 +145,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
                   return;
 
             const reward: VKPLClientInternal.RewardMessage = MapApiToClient.rewardMessageFromApi(message.push.pub.data, channel);
-            const ctx: VKPLClientInternal.RewardEventContext = {
+            const ctx: VKPLClientInternal.RewardEventContext<T> = {
                   ...reward,
                   sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, reward.channel.blogUrl as T, mentionUsers),
                   reply: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, reward.channel.blogUrl as T, mentionUsers ? [...mentionUsers, reward.user.id] : [reward.user.id]),
@@ -163,7 +163,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
                   return;
 
             const channelInfo = message.push.pub.data;
-            const ctx: VKPLClientInternal.ChannelInfoEventContext = {
+            const ctx: VKPLClientInternal.ChannelInfoEventContext<T> = {
                   ...channelInfo,
                   api: this.api,
                   sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, channel.blogUrl as T, mentionUsers),
@@ -181,7 +181,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
                   return;
 
             const streamStatus = message.push.pub.data;
-            const ctx: VKPLClientInternal.StreamStatusEventContext = {
+            const ctx: VKPLClientInternal.StreamStatusEventContext<T> = {
                   ...streamStatus,
                   api: this.api,
                   sendMessage: async (text: string, mentionUsers?: number[]) => this.api.sendMessage(text, channel.blogUrl as T, mentionUsers),
@@ -224,7 +224,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClient
                         if (!this.auth)
                               continue; // can't connect to rewards without token
 
-                        const wsSubscribeToken = await this.api.getWebSocketSubscriptionToken([channel.publicWebSocketChannel]);
+                        const wsSubscribeToken = await this.api.getWebSocketSubscriptionToken([channel.publicWebSocketChannel as T]);
 
                         if (!wsSubscribeToken.data.tokens.length)
                               throw new Error(`Failed to obtain websocket subscribe token for reward channel: ${channel.blogUrl}
@@ -277,7 +277,7 @@ Connect to reward channel will be skipped`);
 
       private async populateMessageParserWithSmiles(): Promise<void> {
             if (this.auth && this.channels.length) {
-                  const smilesSet: APITypes.TSmilesResponse = await this.api.getSmilesSet(this.channels[0].blogUrl);
+                  const smilesSet: APITypes.TSmilesResponse = await this.api.getSmilesSet(this.channels[0].blogUrl as T);
 
                   if (VKPLMessageClient.debugLog)
                         console.warn("[debug:chat] Get smiles set", JSON.stringify(smilesSet, null, 5))

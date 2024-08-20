@@ -151,4 +151,136 @@ export namespace APITypes {
             id: number,
             result: T,
       }
+
+      export type UserStat = {
+            giftsCount: number,
+            messagesCount: number,
+            permanentBansCount: number,
+            temporaryBansCount: number,
+      }
+
+      export type SubscriberInfo = {
+            paidSubscriptionDaysDuration: number | null,
+            subscriptionDaysDuration: number | null,
+      }
+
+      export type UserStatResponse = {
+            bans: [],
+            blog: null,
+            moderator: null,
+            stat: UserStat,
+            subscriberInfo: SubscriberInfo,
+            user: TUser
+      }
+
+      export type ChannelRoleResponse = {
+            data: {
+                  roles: TRole[],
+            },
+      }
+
+      export type AccessRestrictions = {
+            view: View;
+      }
+
+      export type View = {
+            allowed: boolean;
+      }
+
+      export type CategoryType = "game" | "irl";
+
+      export type Category = {
+            showPlayGameUrl?: string,
+            coverUrl: string;
+            type?: CategoryType;
+            id: string;
+            title: string;
+      }
+
+      export type Count = {
+            likes: number;
+            viewers: number;
+            views: number;
+      }
+
+      export type SubscriptionLevel = {
+            externalId: number;
+            name: string;
+            isArchived: boolean;
+            isDeleted: boolean;
+            id: string;
+            priority: number;
+            bonusMultiplier?: number;
+      }
+
+      export type ProfileLink = {
+            link: string;
+            type: string;
+      }
+
+      export type WsLimitedChannel = {
+            token: string;
+            channel: string;
+      }
+
+      export type Stream = {
+            wsChatChannel: string;
+            channelCoverImageUrl: string;
+            isBlackListedByUser: boolean;
+            isPublic: boolean;
+            user: TUser;
+            accessRestrictions: AccessRestrictions;
+            plannedAt: number;
+            endTime: number | null;
+            isChannelModerator: boolean;
+            hasAccess: boolean;
+            isChatModerator: boolean;
+            isEnded: boolean;
+            data: unknown[];
+            isOnline: boolean;
+            count: Count;
+            isLiked: boolean;
+            subscriptionLevels: SubscriptionLevel[];
+            isSupportProgramMember: boolean;
+            title: string;
+            wsLimitedChannel: WsLimitedChannel;
+            hasChatPinnedMessage: boolean;
+            createdAt: number;
+            daNick: string;
+            category: Category;
+            embedUrl: string;
+            isHidden: boolean;
+            channelCoverType: string;
+            isCreated: boolean;
+            id: string;
+            wsStreamViewersChannel: string;
+            wsStreamChannelPrivate: string;
+            wsStreamChannel: string;
+            previewUrl: string;
+            wsChatChannelPrivate: string;
+            titleData: TMessageBlock[];
+            hasChat: boolean;
+      }
+
+      export type ManageStreamResponse = {
+            data: {
+                  stream: Stream,
+            }
+      }
+
+      export type Extra = {
+            isLast: boolean,
+            offset: number,
+      }
+
+      export type CategoryResponse = {
+            data: Category[],
+            extra: Extra,
+      }
+
+      export type CategoryFilters = {
+            search: string,
+            type: CategoryType,
+            limit: number,
+      }
 }

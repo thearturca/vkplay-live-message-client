@@ -13,14 +13,14 @@ type CentrifugeClientEventMap = {
       'stream-status': [data: VkWsTypes.WsMessage<VkWsTypes.StreamStatus>]
 }
 
-export class CentrifugeClient extends EventEmitter<CentrifugeClientEventMap> {
+export class CentrifugeClient<T extends string> extends EventEmitter<CentrifugeClientEventMap> {
       private socket: WebSocket;
       private currentMethodId: number = 0;
       private methods: vkplWsMethod<unknown>[] = [];
 
       constructor(
             private wsServerUrl: string,
-            private api: VkplApi,
+            private api: VkplApi<T>,
       ) {
             super();
       }

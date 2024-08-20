@@ -11,7 +11,7 @@ type VkplApiEventMap = {
       refreshed: [token: VKPLClientInternal.TokenAuth];
 }
 
-export class VkplApi extends EventEmitter<VkplApiEventMap> {
+export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
       constructor(
             private messageParser: VkplMessageParser,
             public auth?: VKPLClientInternal.TokenAuth,
@@ -31,7 +31,12 @@ export class VkplApi extends EventEmitter<VkplApiEventMap> {
                   headers.append("X-From-Id", this.auth.clientId);
       }
 
-      public async getSmilesSet<T extends string>(channel: T): Promise<APITypes.TSmilesResponse> {
+      /**
+       * Получает список смайлов канала
+       *
+       * @param channel - название канала
+       */
+      public async getSmilesSet(channel: T): Promise<APITypes.TSmilesResponse> {
             const res = await this.httpRequest<APITypes.TSmilesResponse>(`/blog/${channel}/smile/user_set/`, "GET");
 
             if (typeof res === "string")
@@ -40,7 +45,12 @@ export class VkplApi extends EventEmitter<VkplApiEventMap> {
             return res;
       }
 
-      public async getBlog<T extends string>(channel: T): Promise<APITypes.TBlogResponse> {
+      /**
+       * Получает информацию о блоге
+       *
+       * @param channel - название канала
+       */
+      public async getBlog(channel: T): Promise<APITypes.TBlogResponse> {
             const res = await this.httpRequest<APITypes.TBlogResponse>(`/blog/${channel}`, "GET");
 
             if (typeof res === "string")
@@ -49,6 +59,9 @@ export class VkplApi extends EventEmitter<VkplApiEventMap> {
             return res;
       }
 
+      /**
+       * Получает информацию о текущем пользователе
+       */
       public async getCurrentUser(): Promise<APITypes.TUser> {
             const res = await this.httpRequest<APITypes.TUser>("/user/current", "GET");
 
@@ -67,7 +80,7 @@ export class VkplApi extends EventEmitter<VkplApiEventMap> {
             return res;
       }
 
-      public async getWebSocketSubscriptionToken<T extends string>(channels: T[]): Promise<APITypes.WebSocketSubscriptionTokensResponse> {
+      public async getWebSocketSubscriptionToken(channels: T[]): Promise<APITypes.WebSocketSubscriptionTokensResponse> {
             const params = new URLSearchParams({
                   channels: channels.map(c => `channel-info-manage:${c}`).join(",")
             });
@@ -81,6 +94,251 @@ export class VkplApi extends EventEmitter<VkplApiEventMap> {
       }
 
       /**
+       * Таймаут пользователя
+       *
+       * @param channel - название канала
+       * @param userId - идентификатор пользователя
+       * @param seconds - время таймаута в секундах
+       */
+      public async timeoutUser(channel: T, userId: number, seconds: number): Promise<{}> {
+            const body = new URLSearchParams({
+                  user_id: userId.toString(),
+                  period: seconds.toString(),
+                  by_stream: "flase",
+                  is_permanent: "false",
+            })
+            const res = await this.httpRequest<{}>(
+                  `/blog/${channel}/public_video_stream/ban`,
+                  "POST",
+                  undefined,
+                  body.toString(),
+                  new Headers({ "Content-type": "application/x-www-form-urlencoded" })
+            );
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Перманентно блокирует пользователя
+       *
+       * @param channel - название канала
+       * @param userId - идентификатор пользователя
+       */
+      public async banUser(channel: T, userId: number): Promise<{}> {
+            const body = new URLSearchParams({
+                  user_id: userId.toString(),
+                  by_stream: "flase",
+                  clean_messages: "true",
+                  is_permanent: "true",
+            });
+
+            const res = await this.httpRequest<{}>(
+                  `/blog/${channel}/public_video_stream/ban`,
+                  "POST",
+                  undefined,
+                  body.toString(),
+                  new Headers({ "Content-type": "application/x-www-form-urlencoded" })
+            );
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Отменяет таймаут и блокировку пользователя
+       *
+       * @param channel - название канала
+       * @param userId - идентификатор пользователя
+       */
+      public async unbanUser(channel: T, userId: number): Promise<{}> {
+            const query = new URLSearchParams({
+                  user_id: userId.toString(),
+                  by_stream: "flase",
+            });
+
+            const res = await this.httpRequest<{}>(
+                  `/blog/${channel}/public_video_stream/ban`,
+                  "DELETE",
+                  query,
+            );
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Удаляет все сообщения пользователя из чата канала
+       *
+       * @param channel - название канала
+       * @param userId - идентификатор пользователя
+       */
+      public async deleteUserMessages(channel: T, userId: number): Promise<{}> {
+            const query = new URLSearchParams({ user_id: userId.toString() });
+            const res = await this.httpRequest<{}>(`/blog/${channel}/public_video_stream/chat/clean`, "DELETE", query);
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+
+      /**
+       * Получает статистику пользователя
+       *
+       * @param channel - название канала
+       * @param userId - идентификатор пользователя
+       */
+      public async userStats(channel: T, userId: number): Promise<APITypes.UserStatResponse> {
+            const query = new URLSearchParams({ user_id: userId.toString() });
+            const res = await this.httpRequest<APITypes.UserStatResponse>(
+                  `/blog/${channel}/public_video_stream/chat/stat`,
+                  "GET",
+                  query,
+            );
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Получает роли, доступные на канале
+       *
+       * @param channel - название канала
+       */
+      public async getChannelRoles(channel: T): Promise<APITypes.ChannelRoleResponse> {
+            const res = await this.httpRequest<APITypes.ChannelRoleResponse>(`/channel/${channel}/role`, "GET");
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Изменяет роли пользователя
+       *
+       * @param channel - название канала
+       * @param userId - идентификатор пользователя
+       * @param roles - список идентификаторов ролей
+       */
+      public async setUserRoles(channel: T, userId: number, roles: string[]): Promise<{}> {
+            const body = new URLSearchParams();
+
+            body.append("role_ids", roles.join(","));
+
+            const res = await this.httpRequest<{}>(
+                  `/channel/${channel}/role/user/${userId}`,
+                  "PUT",
+                  undefined,
+                  body.toString(),
+                  new Headers({ "Content-type": "application/x-www-form-urlencoded" })
+            );
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Обновляет информацию о стриме
+       *
+       * @param channel - название канала
+       * @param streamInfo - информация о стриме
+       *
+       * Параметр `title` будет парситься. Возможно использование ссылок.
+       * Параметр `plannedAt` будет переведён в UNIX timestamp
+       */
+      public async setStreamInfo(channel: T, streamInfo: Partial<VKPLClientInternal.StreamInfo>): Promise<APITypes.ManageStreamResponse> {
+            const body = new URLSearchParams();
+
+            if (streamInfo.title)
+                  body.append("title_data", JSON.stringify(this.messageParser.serialize(streamInfo.title)));
+
+            if (streamInfo.categoryId)
+                  body.append("category_id", streamInfo.categoryId);
+
+            if (streamInfo.plannedAt) {
+                  const timestamp = Math.floor(streamInfo.plannedAt.getTime() / 1000);
+                  body.append("planned_at", timestamp.toString());
+            }
+
+            if (streamInfo.donationAlertNick)
+                  body.append("da_nick", streamInfo.donationAlertNick);
+
+            if (streamInfo.subscriptionLevelId)
+                  body.append("subscription_level_id", streamInfo.subscriptionLevelId);
+
+            const res = await this.httpRequest<APITypes.ManageStreamResponse>(
+                  `/channel/${channel}/manage/stream`,
+                  "PUT",
+                  undefined,
+                  body.toString(),
+                  new Headers({ "Content-type": "application/x-www-form-urlencoded" })
+            );
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Получает список категорий, доступных на live.vkplay.ru
+       *
+       * @param filters - Фильтры. Если не указывать фильтры, то возвращает список из всех категорий 
+       * @return {Promise<APITypes.CategoryResponse>} Ответ API
+       */
+      public async getCategories(filters?: Partial<APITypes.CategoryFilters>): Promise<APITypes.CategoryResponse> {
+            const query = new URLSearchParams();
+
+            if (filters?.type)
+                  query.append("type", filters.type);
+
+            if (filters?.search)
+                  query.append("search", filters.search);
+
+            if (filters?.limit)
+                  query.append("limit", filters.limit.toString());
+
+            const res = await this.httpRequest<APITypes.CategoryResponse>("/public_video_stream/category/", "GET", query);
+
+            if (typeof res === "string")
+                  throw new Error(res);
+
+            return res;
+      }
+
+      /**
+       * Метод производит поиск категории по названию. Если нашлась категория, то производит
+       * изменение категории канала.
+       *
+       * @param channel - Канал
+       * @param categoryName - Название категории
+       * @return {Promise<APITypes.ManageStreamResponse>} Ответ API на изменение категории
+       *
+       * @throws {Error} Если категория не найдена
+       */
+      public async setCategory(channel: T, categoryName: string): Promise<APITypes.ManageStreamResponse> {
+            const category = await this.getCategories({ search: categoryName, limit: 1 });
+
+            if (category.data.length === 0)
+                  throw new Error("Category not found");
+
+            return await this.setStreamInfo(channel, { categoryId: category.data[0].id });
+      }
+
+      /**
       * @param message - Сообщение
       * @param channel - Канал
       * @param mentionUserId - ID пользователей, которые должны быть упомянуты в сообщении
@@ -89,7 +347,7 @@ export class VkplApi extends EventEmitter<VkplApiEventMap> {
       *
       * Позволяет отправлять сообщение в чат трансляции без подключения к чату. Нужно лишь указать канал, куда будет отправлено сообщение
       */
-      public async sendMessage<T extends string>(message: string, channel: T, mentionUsers?: number[], threadId?: number): Promise<APITypes.TMessageResponse> {
+      public async sendMessage(message: string, channel: T, mentionUsers?: number[], threadId?: number): Promise<APITypes.TMessageResponse> {
             const serializedMessage = { data: JSON.stringify(this.messageParser.serialize(message, mentionUsers)) };
             const body = new URLSearchParams(serializedMessage);
 

@@ -99,13 +99,21 @@ export namespace VKPLClientInternal {
             smallUrl: string
       };
 
-      export type Context = {
-            api: VkplApi,
+      export type StreamInfo = {
+            title: string,
+            categoryId: string,
+            plannedAt: Date,
+            donationAlertNick: string,
+            subscriptionLevelId: string,
       }
 
-      export type MessageEvent = [messageContext: MessageEventContext];
+      export type Context<Channel extends string> = {
+            api: VkplApi<Channel>,
+      }
 
-      export type MessageEventContext = Context & ChatMessage & {
+      export type MessageEvent<Channel extends string> = [ctx: MessageEventContext<Channel>];
+
+      export type MessageEventContext<Channel extends string> = Context<Channel> & ChatMessage & {
             /**
             * Отправить сообещние в канал
             */
@@ -144,9 +152,9 @@ export namespace VKPLClientInternal {
             user: VkWsTypes.User
       };
 
-      export type RewardEvent = [rewardContext: RewardEventContext]
+      export type RewardEvent<Channel extends string> = [ctx: RewardEventContext<Channel>];
 
-      export type RewardEventContext = Context & RewardMessage & {
+      export type RewardEventContext<Channel extends string> = Context<Channel> & RewardMessage & {
             /**
             * Отправить сообещние в канал
             */
@@ -157,27 +165,27 @@ export namespace VKPLClientInternal {
             reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
       }
 
-      export type ChannelInfoEvent = [channelInfoContext: ChannelInfoEventContext]
+      export type ChannelInfoEvent<Channel extends string> = [ctx: ChannelInfoEventContext<Channel>]
 
-      export type ChannelInfoEventContext = Context & VkWsTypes.ChannelInfo & {
+      export type ChannelInfoEventContext<Channel extends string> = Context<Channel> & VkWsTypes.ChannelInfo & {
             /**
             * Отправить сообещние в канал
             */
             sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
       }
 
-      export type StreamStatusEvent = [streamStatusContext: StreamStatusEventContext]
+      export type StreamStatusEvent<Channel extends string> = [ctx: StreamStatusEventContext<Channel>]
 
-      export type StreamStatusEventContext = Context & VkWsTypes.StreamStatus & {
+      export type StreamStatusEventContext<Channel extends string> = Context<Channel> & VkWsTypes.StreamStatus & {
             /**
             * Отправить сообещние в канал
             */
             sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
       }
 
-      export type RefreshTokenEvent = [refreshTokenContext: RefreshTokenEventContext]
+      export type RefreshTokenEvent<Channel extends string> = [ctx: RefreshTokenEventContext<Channel>];
 
-      export type RefreshTokenEventContext = Context & {
+      export type RefreshTokenEventContext<Channel extends string> = Context<Channel> & {
             auth: TokenAuth,
       };
 }
