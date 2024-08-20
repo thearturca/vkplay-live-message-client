@@ -31,14 +31,14 @@ export class VkplMessageParser {
 
             for (const word of splitedMessage)
                   if (this.smiles.has(word)) {
-                        if (textStack != "") {
+                        if (textStack) {
                               serializedMessage.push(...this.getTextBlock(textStack));
                               textStack = "";
                         }
 
-                        serializedMessage.push(...this.getSmileBlock(word, this.smiles.get(word)!));
+                        serializedMessage.push(...this.getSmileBlock(word, this.smiles.get(word) ?? word));
                   } else if (word.startsWith("https://") || word.startsWith("http://")) {
-                        if (textStack != "") {
+                        if (textStack) {
                               serializedMessage.push(...this.getTextBlock(textStack));
                               textStack = "";
                         }
@@ -48,7 +48,7 @@ export class VkplMessageParser {
                         const mdlIndex = Number(word.slice("__markdownLink+".length, -2));
 
                         if (!isNaN(mdlIndex) && markdownLinks[mdlIndex]) {
-                              if (textStack != "") {
+                              if (textStack) {
                                     serializedMessage.push(...this.getTextBlock(textStack));
                                     textStack = "";
                               }
@@ -59,7 +59,7 @@ export class VkplMessageParser {
                         textStack += word + " ";
                   }
 
-            if (textStack != "")
+            if (textStack)
                   serializedMessage.push(...this.getTextBlock(textStack));
 
             return serializedMessage;

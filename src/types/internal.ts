@@ -1,6 +1,6 @@
-import { VkplApi } from "../services/VkplApi.js";
 import { APITypes } from "./api.js";
 import { VkWsTypes } from "./api.v2.js";
+import { VkplApi } from "../services/VkplApi.js";
 
 export namespace VKPLClientInternal {
       export type Smile = { id: string, name: string }
@@ -103,7 +103,7 @@ export namespace VKPLClientInternal {
             api: VkplApi,
       }
 
-      export type MessageEvent = (messageContext: MessageEventContext) => void;
+      export type MessageEvent = [messageContext: MessageEventContext];
 
       export type MessageEventContext = Context & ChatMessage & {
             /**
@@ -144,7 +144,7 @@ export namespace VKPLClientInternal {
             user: VkWsTypes.User
       };
 
-      export type RewardEvent = (rewardContext: RewardEventContext) => void;
+      export type RewardEvent = [rewardContext: RewardEventContext]
 
       export type RewardEventContext = Context & RewardMessage & {
             /**
@@ -157,7 +157,7 @@ export namespace VKPLClientInternal {
             reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
       }
 
-      export type ChannelInfoEvent = (channelInfoContext: ChannelInfoEventContext) => void;
+      export type ChannelInfoEvent = [channelInfoContext: ChannelInfoEventContext]
 
       export type ChannelInfoEventContext = Context & VkWsTypes.ChannelInfo & {
             /**
@@ -166,7 +166,7 @@ export namespace VKPLClientInternal {
             sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
       }
 
-      export type StreamStatusEvent = (streamStatusContext: StreamStatusEventContext) => void;
+      export type StreamStatusEvent = [streamStatusContext: StreamStatusEventContext]
 
       export type StreamStatusEventContext = Context & VkWsTypes.StreamStatus & {
             /**
@@ -175,7 +175,7 @@ export namespace VKPLClientInternal {
             sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
       }
 
-      export type RefreshTokenEvent = (refreshTokenContext: RefreshTokenEventContext) => void;
+      export type RefreshTokenEvent = [refreshTokenContext: RefreshTokenEventContext]
 
       export type RefreshTokenEventContext = Context & {
             auth: TokenAuth,

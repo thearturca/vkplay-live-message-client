@@ -1,35 +1,34 @@
-import EventEmitter from "events";
 import { APITypes } from "./types/api.js";
-import { VkplMessageParser } from "./services/VkplMessageParser.js";
-import { VKPLClientInternal } from "./types/internal.js";
-import { MapApiToClient } from "./services/MapApiToLibService.js";
 import { CentrifugeClient } from "./services/CentrifugeClient.js";
+import EventEmitter from "events";
+import { MapApiToClient } from "./services/MapApiToLibService.js";
+import { VKPLClientInternal } from "./types/internal.js";
 import { VkWsTypes } from "./types/api.v2.js";
 import { VkplApi } from "./services/VkplApi.js";
+import { VkplMessageParser } from "./services/VkplMessageParser.js";
 
-declare interface VKPLMessageClient<T extends string> {
+type VKPLMessageClientEventMap = {
       /**
        * Событие о новом сообщении в каналах трансляции 
        */
-      on(event: 'message', listener: VKPLClientInternal.MessageEvent): this;
+      'message': VKPLClientInternal.MessageEvent
       /**
        * Событие о получение награды за баллы канала
        */
-      on(event: 'reward', listener: VKPLClientInternal.RewardEvent): this;
+      'reward': VKPLClientInternal.RewardEvent
       /**
        * Событие о получении информации о канале таких как название, категория, зрители и т.д.
        */
-      on(event: 'channel-info', listener: VKPLClientInternal.ChannelInfoEvent): this;
+      'channel-info': VKPLClientInternal.ChannelInfoEvent
       /**
        * Событие о получении статуса канала. Если начался трансляция или остановилась
        */
-      on(event: 'stream-status', listener: VKPLClientInternal.StreamStatusEvent): this;
+      'stream-status': VKPLClientInternal.StreamStatusEvent
 
       /**
        * Событие о получении нового токена. Понадобится для сохранения нового токена, и восстановления работы бота без надобности идти на сайт
        */
-      on(event: 'refresh-token', listener: VKPLClientInternal.RefreshTokenEvent): this;
-      on(event: string, listener: Function): this;
+      'refresh-token': VKPLClientInternal.RefreshTokenEvent
 }
 
 /**
@@ -53,7 +52,7 @@ declare interface VKPLMessageClient<T extends string> {
  *           await ctx.replyToThread("Hello World");
  * });
  */
-class VKPLMessageClient<T extends string> extends EventEmitter {
+class VKPLMessageClient<T extends string> extends EventEmitter<VKPLMessageClientEventMap> {
       private wsServerUrl: string = "wss://pubsub.live.vkplay.ru/connection/websocket?cf_protocol_version=v2";
 
       private auth?: VKPLClientInternal.TokenAuth;
@@ -123,7 +122,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
 
             // skip message since we are not subscribed to this channel
-            if (channel == undefined)
+            if (!channel)
                   return;
 
             const mappedMessage: VKPLClientInternal.ChatMessage = MapApiToClient.chatMessageFromApi(message.push.pub.data, channel);
@@ -142,7 +141,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
 
             // skip message since we are not subscribed to this channel
-            if (channel == undefined)
+            if (!channel)
                   return;
 
             const reward: VKPLClientInternal.RewardMessage = MapApiToClient.rewardMessageFromApi(message.push.pub.data, channel);
@@ -160,7 +159,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
 
             // skip message since we are not subscribed to this channel
-            if (channel == undefined)
+            if (!channel)
                   return;
 
             const channelInfo = message.push.pub.data;
@@ -178,7 +177,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter {
             const channel: VKPLClientInternal.Channel | undefined = this.findChannelById(message.push.channel.split(":")[1]);
 
             // skip message since we are not subscribed to this channel
-            if (channel == undefined)
+            if (!channel)
                   return;
 
             const streamStatus = message.push.pub.data;

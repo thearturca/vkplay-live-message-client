@@ -1,20 +1,19 @@
-import WebSocket from "ws";
 import EventEmitter from "events";
-import { VkWsTypes } from "../types/api.v2.js";
 import { VKPLClientInternal } from "../types/internal.js";
-import { VkplApi } from "./VkplApi.js";
 import VKPLMessageClient from "../index.js";
+import { VkWsTypes } from "../types/api.v2.js";
+import { VkplApi } from "./VkplApi.js";
+import WebSocket from "ws";
 
-export declare interface CentrifugeClient {
-      on(event: 'message', listener: (newMessage: VkWsTypes.WsMessage<VkWsTypes.ChatMessage>) => void): this;
-      on(event: 'reconnect', listener: () => void): this;
-      on(event: 'reward', listener: (data: VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>) => void): this;
-      on(event: 'channel-info', listener: (data: VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>) => void): this;
-      on(event: 'stream-status', listener: (data: VkWsTypes.WsMessage<VkWsTypes.StreamStatus>) => void): this;
-      on(event: string, listener: Function): this;
+type CentrifugeClientEventMap = {
+      'message': [newMessage: VkWsTypes.WsMessage<VkWsTypes.ChatMessage>]
+      'reconnect': []
+      'reward': [data: VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>]
+      'channel-info': [data: VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>]
+      'stream-status': [data: VkWsTypes.WsMessage<VkWsTypes.StreamStatus>]
 }
 
-export class CentrifugeClient extends EventEmitter {
+export class CentrifugeClient extends EventEmitter<CentrifugeClientEventMap> {
       private socket: WebSocket;
       private currentMethodId: number = 0;
       private methods: vkplWsMethod<unknown>[] = [];
@@ -34,13 +33,13 @@ export class CentrifugeClient extends EventEmitter {
 
                   this.socket = new WebSocket(this.wsServerUrl, { headers: { Origin: "https://live.vkplay.ru" } });
 
-                  this.socket.onopen = async (e) => {
+                  this.socket.onopen = async (e): Promise<void> => {
                         await this.onOpen(e).catch(reject);
                         resolve();
                   };
-                  this.socket.onmessage = (e) => this.onMessage(e);
-                  this.socket.onclose = (e) => this.onClose(e);
-                  this.socket.onerror = (e) => this.onError(e);
+                  this.socket.onmessage = (e): void => this.onMessage(e);
+                  this.socket.onclose = (e): Promise<void> => this.onClose(e);
+                  this.socket.onerror = (e): void => this.onError(e);
             });
       }
 
@@ -69,7 +68,6 @@ export class CentrifugeClient extends EventEmitter {
 
             await this.invokeMethod(payload);
             console.log("[open] Connected");
-            this.emit("open");
       }
 
       private resolveMethod<T extends Record<string, unknown>>(wsMessage: VkWsTypes.WsMethodResponse<T>): void {
@@ -80,7 +78,7 @@ export class CentrifugeClient extends EventEmitter {
 
             const method: vkplWsMethod<unknown> | undefined = this.methods[methodIndex];
 
-            if (method == undefined)
+            if (!method)
                   return;
 
             method.callbBack(wsMessage.result);
@@ -146,7 +144,7 @@ export class CentrifugeClient extends EventEmitter {
       }
 
       public onMessage(event: WebSocket.MessageEvent): void {
-            if (event.data == "{}") {
+            if (event.data === "{}") {
                   this.socket.send("{}");
                   return;
             }

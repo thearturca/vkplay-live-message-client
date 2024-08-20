@@ -1,19 +1,17 @@
+import { APITypes } from "../types/api.js";
 import { CookieAgent } from "http-cookie-agent/undici";
 import { CookieJar } from "tough-cookie";
-
-import VKPLMessageClient from "../client.js";
-import { APITypes } from "../types/api.js";
+import EventEmitter from "events";
 import { HTTPMethod } from "../types/http.js";
 import { VKPLClientInternal } from "../types/internal.js";
+import VKPLMessageClient from "../client.js";
 import { VkplMessageParser } from "./VkplMessageParser.js";
-import EventEmitter from "events";
 
-export declare interface VkplApi {
-      on(event: 'refreshed', listener: (token: VKPLClientInternal.TokenAuth) => void): this;
-      on(event: string, listener: Function): this;
+type VkplApiEventMap = {
+      refreshed: [token: VKPLClientInternal.TokenAuth];
 }
 
-export class VkplApi extends EventEmitter {
+export class VkplApi extends EventEmitter<VkplApiEventMap> {
       constructor(
             private messageParser: VkplMessageParser,
             public auth?: VKPLClientInternal.TokenAuth,
@@ -22,7 +20,7 @@ export class VkplApi extends EventEmitter {
             super();
       }
 
-      protected addAuthorizationHeader(headers: Headers) {
+      protected addAuthorizationHeader(headers: Headers): void {
             if (!this.auth)
                   return;
 

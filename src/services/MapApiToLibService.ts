@@ -1,6 +1,6 @@
 import { APITypes } from "../types/api.js";
-import { VkWsTypes } from "../types/api.v2.js";
 import { VKPLClientInternal } from "../types/internal.js";
+import { VkWsTypes } from "../types/api.v2.js";
 import { VkplMessageParser } from "./VkplMessageParser.js";
 
 export class MapApiToClient {

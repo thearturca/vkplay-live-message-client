@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import { VkplMessageParser } from "./VkplMessageParser.js";
 import type { APITypes } from "../types/api.js";
+import { VkplMessageParser } from "./VkplMessageParser.js";
 
 describe("Message service", () => {
       const messageService = new VkplMessageParser(new Map<string, string>([["Tlen", "6cbbcf8a-58cc-4afb-857a-e3f89f6049a6"]]));
