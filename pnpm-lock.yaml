@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      eventemitter3:
+        specifier: ^5.0.1
+        version: 5.0.1
       http-cookie-agent:
         specifier: ^6.0.5
         version: 6.0.5(tough-cookie@4.1.4)(undici@6.19.8)
@@ -511,6 +514,9 @@ packages:
 
   estree-walker@3.0.3:
     resolution: {integrity: sha512-7RUKfXgSMMkzt6ZuXmqapOurLGPPfgj6l9uRZ7lRGolvk0y2yocc35LdcxKC5PQZdn2DMqioAQ2NoWcrTKmm6g==}
+
+  eventemitter3@5.0.1:
+    resolution: {integrity: sha512-GWkBvjiSZK87ELrYOSESUYeVIc9mvLLf/nXalMOS5dYrgZq9o5OVkbZAVM06CVxYsCwH9BDZFPlQTlPA1j4ahA==}
 
   execa@8.0.1:
     resolution: {integrity: sha512-VyhnebXciFV2DESc+p6B+y0LjSm0krU4OgJN44qFAhBY0TJ+1V61tYD2+wHusZ6F9n5K+vl8k0sTy7PEfV4qpg==}
@@ -1312,6 +1318,8 @@ snapshots:
   estree-walker@3.0.3:
     dependencies:
       '@types/estree': 1.0.5
+
+  eventemitter3@5.0.1: {}
 
   execa@8.0.1:
     dependencies:

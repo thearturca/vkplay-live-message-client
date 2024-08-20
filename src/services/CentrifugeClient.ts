@@ -1,4 +1,4 @@
-import EventEmitter from "events";
+import { EventEmitter } from "eventemitter3";
 import { VKPLClientInternal } from "../types/internal.js";
 import VKPLMessageClient from "../index.js";
 import { VkWsTypes } from "../types/api.v2.js";

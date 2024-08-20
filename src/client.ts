@@ -1,6 +1,6 @@
 import { APITypes } from "./types/api.js";
 import { CentrifugeClient } from "./services/CentrifugeClient.js";
-import EventEmitter from "events";
+import { EventEmitter } from "eventemitter3";
 import { MapApiToClient } from "./services/MapApiToLibService.js";
 import { VKPLClientInternal } from "./types/internal.js";
 import { VkWsTypes } from "./types/api.v2.js";

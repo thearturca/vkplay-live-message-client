@@ -1,7 +1,7 @@
 import { APITypes } from "../types/api.js";
 import { CookieAgent } from "http-cookie-agent/undici";
 import { CookieJar } from "tough-cookie";
-import EventEmitter from "events";
+import { EventEmitter } from "eventemitter3";
 import { HTTPMethod } from "../types/http.js";
 import { VKPLClientInternal } from "../types/internal.js";
 import VKPLMessageClient from "../client.js";

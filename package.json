@@ -33,6 +33,7 @@
             "lib/**/*"
       ],
       "dependencies": {
+            "eventemitter3": "^5.0.1",
             "http-cookie-agent": "^6.0.5",
             "tough-cookie": "^4.1.4",
             "undici": "^6.19.8",
