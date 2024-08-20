@@ -7,7 +7,7 @@
       "type": "module",
       "scripts": {
             "test": "vitest run",
-            "lint": "oxlint",
+            "lint": "oxlint --config ./oxlintrc.json",
             "build": "rimraf lib && tsc --project tsconfig.build.json",
             "dev": "tsc --watch --project tsconfig.build.json",
             "prepublishOnly": "npm run build && npm run test"

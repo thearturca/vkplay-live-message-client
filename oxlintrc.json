@@ -1,0 +1,29 @@
+{
+      "env": {
+            "node": true
+      },
+      "rules": {
+            "oxc/no-accumulating-spread": "error",
+            "eslint/no-var": "error",
+            "eslint/no-void ": "error",
+            "typescript/explicit-function-return-type": "error",
+            "typescript/no-dynamic-delete": "error",
+            "typescript/no-import-type-side-effects": "error",
+            "typescript/no-non-null-asserted-nullish-coalescing": "error",
+            "typescript/prefer-literal-enum-member": "error",
+            "typescript/no-var-requires": "error",
+            "import/no-self-import": "error",
+            "oxc/misrefactored-assign-op": "error",
+            "typescript/no-confusing-non-null-assertion": "error",
+            "eslint/eqeqeq": "error",
+            "eslint/default-case-last": "error",
+            "eslint/sort-imports": "error",
+            "typescript/array-type": "error",
+            "import/no-cycle ": "warn",
+            "typescript/no-non-null-assertion": "warn",
+            "eslint/no-useless-concat": "warn",
+            "eslint/default-param-last": "warn",
+            "promise/prefer-await-to-then": "warn",
+            "unicorn/no-await-expression-member ": "warn"
+      }
+}
