@@ -114,6 +114,56 @@ client.on("reward", async (ctx) => {
 });
 ```
 
+### Изменение названия трансляции и категории по командам
+
+```TS
+const client = new VKPLMessageClient(...);
+await client.connect();
+
+// Команда смены названия. `!название [название трансляции]`
+const titleCommand = "!название".toLowerCase();
+
+// Команда смены категории. `!категория [название категории]`
+const categoryCommand = "!категория".toLowerCase();
+
+client.on("message", async (ctx) => {
+      // Только для модераторов канала
+      if (!ctx.user.isChannelModerator)
+            return;
+
+      // Проверка на команду смены названия
+      if (ctx.message.text.toLowerCase().startsWith(titleCommand)) {
+            const newTitle = ctx.message.text.slice(titleCommand.length);
+
+            try {
+                  const stream = await ctx.api.setStreamInfo(ctx.channel.blogUrl, {
+                        title: newTitle
+                  });
+
+                  await ctx.reply(`Название трансляции обновлено: ${stream.data.stream.title}`);
+
+            } catch (error) {
+                  console.error(error);
+                  await ctx.reply("Ошибка обновления названия трансляции");
+            }
+      }
+
+      // Проверка на команду смены категории
+      if (ctx.message.text.toLowerCase().startsWith(categoryCommand)) {
+            const newCategory = ctx.message.text.slice(categoryCommand.length);
+
+            try {
+                  const stream = await ctx.api.setCategory(ctx.channel.blogUrl, newCategory);
+
+                  await ctx.reply(`Категория обновлена: ${stream.data.stream.category.title}`);
+            } catch (error) {
+                  console.error(error);
+                  await ctx.reply("Ошибка обновления категории");
+            }
+      }
+});
+```
+
 ## Фичи
 
 ### Readonly режим
