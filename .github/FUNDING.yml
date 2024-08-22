@@ -10,4 +10,7 @@ liberapay: # Replace with a single Liberapay username
 issuehunt: # Replace with a single IssueHunt username
 otechie: # Replace with a single Otechie username
 lfx_crowdfunding: # Replace with a single LFX Crowdfunding project-name e.g., cloud-foundry
-custom: ['https://boosty.to/thearturca/single-payment/donation/495699/target?share=target_link']
+custom:
+    [
+        "https://boosty.to/thearturca/single-payment/donation/495699/target?share=target_link",
+    ]

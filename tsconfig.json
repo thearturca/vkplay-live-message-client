@@ -1,56 +1,17 @@
 {
-      // This is an alias to @tsconfig/node16: https://github.com/tsconfig/bases
-      "extends": "ts-node/node16/tsconfig.json",
-      // Most ts-node options can be specified here using their programmatic names.
-      "ts-node": {
-            "files": true,
-            "esm": true,
-            "experimentalResolver": true,
-            "compilerOptions": {
-                  // compilerOptions specified here will override those declared below,
-                  // but *only* in ts-node.  Useful if you want ts-node and tsc to use
-                  // different options with a single tsconfig.json.
-                  "esModuleInterop": true,
-                  "module": "ESNext",
-                  "moduleResolution": "NodeNext",
-                  "outDir": "./lib"
-            }
-      },
-      "compilerOptions": {
-            // typescript options here
-            "strict": true,
-            "esModuleInterop": true,
-            "declaration": true,
-            "module": "NodeNext",
-            "moduleResolution": "NodeNext",
-            "noImplicitAny": false,
-            "noUnusedLocals": false,
-            "removeComments": false,
-            "noLib": false,
-            "emitDecoratorMetadata": true,
-            "experimentalDecorators": true,
-            "useUnknownInCatchVariables": false,
-            "strictPropertyInitialization": false,
-            "target": "ESNext",
-            "sourceMap": true,
-            "allowJs": false,
-            "checkJs": false,
-            "outDir": "./lib",
-            "lib": [
-                  "ESNext"
-            ],
-            "types": [
-                  "node",
-                  "ws",
-                  "vitest/globals"
-            ]
-      },
-      "include": [
-            "src/**/*",
-            "tests/**/*",
-            "**/*.spec.ts"
-      ],
-      "exclude": [
-            "node_modules"
-      ]
+    "@schema": "https://json.schemastore.org/tsconfig",
+    "extends": "@thearturca/shared-configs/tsconfig",
+    "compilerOptions": {
+        "removeComments": false,
+        "noLib": false,
+        "emitDecoratorMetadata": true,
+        "experimentalDecorators": true,
+        "sourceMap": true,
+        "allowJs": false,
+        "checkJs": false,
+        "outDir": "./lib",
+        "types": ["node", "ws", "vitest/globals"]
+    },
+    "include": ["src/**/*", "tests/**/*", "**/*.spec.ts"],
+    "exclude": ["node_modules"]
 }

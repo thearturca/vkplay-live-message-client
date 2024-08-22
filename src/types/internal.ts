@@ -1,191 +1,229 @@
+import { VkplApi } from "../services/VkplApi.js";
 import { APITypes } from "./api.js";
 import { VkWsTypes } from "./api.v2.js";
-import { VkplApi } from "../services/VkplApi.js";
 
 export namespace VKPLClientInternal {
-      export type Smile = { id: string, name: string }
+    export type Smile = { id: string; name: string };
 
-      export type AccessTokenAuth = {
-            accessToken: string,
-      }
+    export type AccessTokenAuth = {
+        accessToken: string;
+    };
 
-      export type WithRefreshToken<T extends Record<string, unknown>> = {
-            refreshToken: string,
-            expiresAt: number,
-            clientId: string,
-      } & T;
+    export type WithRefreshToken<T extends Record<string, unknown>> = {
+        refreshToken: string;
+        expiresAt: number;
+        clientId: string;
+    } & T;
 
-      export type TokenAuth = AccessTokenAuth | WithRefreshToken<AccessTokenAuth>;
+    export type TokenAuth = AccessTokenAuth | WithRefreshToken<AccessTokenAuth>;
 
-      /**
-       * @deprecated Vkpl усложнил процесс получения токена по логину и паролю. Поэтому данный функционал временно не работает.
-       * При попытке использовать эту функцию, будет выдана ошибка.
-       */
-      export type LoginAuth = {
-            login: string,
-            password: string
-      }
+    /**
+     * @deprecated Vkpl усложнил процесс получения токена по логину и паролю. Поэтому данный функционал временно не работает.
+     * При попытке использовать эту функцию, будет выдана ошибка.
+     */
+    export type LoginAuth = {
+        login: string;
+        password: string;
+    };
 
-      export type ReadonlyAuth = "readonly" | undefined;
+    export type ReadonlyAuth = "readonly" | undefined;
 
-      export type Auth = TokenAuth | LoginAuth | ReadonlyAuth;
+    export type Auth = TokenAuth | LoginAuth | ReadonlyAuth;
 
-      export type Config<T extends string> = {
-            channels: T[],
-            auth: Auth,
-            wsServer?: string,
-            debugLog?: boolean,
-      };
+    export type Config<T extends string> = {
+        channels: T[];
+        auth: Auth;
+        wsServer?: string;
+        debugLog?: boolean;
+    };
 
-      export type Channel = {
-            blogUrl: string,
-            publicWebSocketChannel: string,
-            name: string,
-            id: number
-      };
+    export type Channel = {
+        blogUrl: string;
+        publicWebSocketChannel: string;
+        name: string;
+        id: number;
+    };
 
-      export type ParentMessage = {
-            message: DeserializedMessage,
-            user: VkWsTypes.ChatUser,
-            id: number,
-            isPrivate: boolean
-      };
+    export type ParentMessage = {
+        message: DeserializedMessage;
+        user: VkWsTypes.ChatUser;
+        id: number;
+        isPrivate: boolean;
+    };
 
-      export type ChatMessage = {
-            parent?: ParentMessage,
-            message: DeserializedMessage,
-            user: VkWsTypes.ChatUser,
-            channel: Channel,
-            createdAt: number,
-            id: number,
-            isPrivate: boolean
-      };
+    export type ChatMessage = {
+        parent?: ParentMessage;
+        message: DeserializedMessage;
+        user: VkWsTypes.ChatUser;
+        channel: Channel;
+        createdAt: number;
+        id: number;
+        isPrivate: boolean;
+    };
 
-      export type DeserializedMessage = {
-            text: string,
-            smiles: Smile[],
-            mentions: Mention[],
-            links: Link[],
-      };
+    export type DeserializedMessage = {
+        text: string;
+        smiles: Smile[];
+        mentions: Mention[];
+        links: Link[];
+    };
 
-      export type Link = {
-            text: string,
-            url: string
-      }
+    export type Link = {
+        text: string;
+        url: string;
+    };
 
-      export type Mention = {
-            userId: number,
-            name?: string,
-            displayName?: string,
-            nick?: string
-      };
+    export type Mention = {
+        userId: number;
+        name?: string;
+        displayName?: string;
+        nick?: string;
+    };
 
-      export type Role = {
-            id: string,
-            name: string,
-            priority: number,
-            smallUrl: string,
-            mediumUrl: string
-            largeUrl: string,
-      }
+    export type Role = {
+        id: string;
+        name: string;
+        priority: number;
+        smallUrl: string;
+        mediumUrl: string;
+        largeUrl: string;
+    };
 
-      export type Badge = {
-            achievement: { name: string, type: string },
-            id: string,
-            isCreated: boolean,
-            largeUrl: string,
-            mediumUrl: string,
-            name: string,
-            smallUrl: string
-      };
+    export type Badge = {
+        achievement: { name: string; type: string };
+        id: string;
+        isCreated: boolean;
+        largeUrl: string;
+        mediumUrl: string;
+        name: string;
+        smallUrl: string;
+    };
 
-      export type StreamInfo = {
-            title: string,
-            categoryId: string,
-            plannedAt: Date,
-            donationAlertNick: string,
-            subscriptionLevelId: string,
-      }
+    export type StreamInfo = {
+        title: string;
+        categoryId: string;
+        plannedAt: Date;
+        donationAlertNick: string;
+        subscriptionLevelId: string;
+    };
 
-      export type Context<Channel extends string> = {
-            api: VkplApi<Channel>,
-      }
+    export type Context<Channel extends string> = {
+        api: VkplApi<Channel>;
+    };
 
-      export type MessageEvent<Channel extends string> = [ctx: MessageEventContext<Channel>];
+    export type MessageEvent<Channel extends string> = [
+        ctx: MessageEventContext<Channel>,
+    ];
 
-      export type MessageEventContext<Channel extends string> = Context<Channel> & ChatMessage & {
+    export type MessageEventContext<Channel extends string> = Context<Channel> &
+        ChatMessage & {
             /**
-            * Отправить сообещние в канал
-            */
-            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
-            /**
-            * Отметить пользователя в сообщении, и отправить его
-            */
-            reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
-            /**
-            * Отправить сообщение в тред
-            */
-            replyToThread(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
-      };
-
-      export type RewardMessage = {
-            /**
-             * Полученная награда
+             * Отправить сообещние в канал
              */
-            reward: VkWsTypes.Reward & {
-                  /**
-                   * Сообщение к награде
-                   */
-                  message?: DeserializedMessage
-                  /**
-                   * Статус награды
-                   */
-                  status: VkWsTypes.RewardStatus,
-            },
+            sendMessage(
+                text: string,
+                mentionUsers?: number[],
+            ): Promise<APITypes.TMessageResponse>;
             /**
-             * Канал, в котором была получена награда
+             * Отметить пользователя в сообщении, и отправить его
              */
-            channel: Channel,
+            reply(
+                text: string,
+                mentionUsers?: number[],
+            ): Promise<APITypes.TMessageResponse>;
             /**
-             * Пользователь, который получил награду
+             * Отправить сообщение в тред
              */
-            user: VkWsTypes.User
-      };
+            replyToThread(
+                text: string,
+                mentionUsers?: number[],
+            ): Promise<APITypes.TMessageResponse>;
+        };
 
-      export type RewardEvent<Channel extends string> = [ctx: RewardEventContext<Channel>];
-
-      export type RewardEventContext<Channel extends string> = Context<Channel> & RewardMessage & {
+    export type RewardMessage = {
+        /**
+         * Полученная награда
+         */
+        reward: VkWsTypes.Reward & {
             /**
-            * Отправить сообещние в канал
-            */
-            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
+             * Сообщение к награде
+             */
+            message?: DeserializedMessage;
             /**
-            * Отметить пользователя в сообщении, и отправить его
-            */
-            reply(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>
-      }
+             * Статус награды
+             */
+            status: VkWsTypes.RewardStatus;
+        };
+        /**
+         * Канал, в котором была получена награда
+         */
+        channel: Channel;
+        /**
+         * Пользователь, который получил награду
+         */
+        user: VkWsTypes.User;
+    };
 
-      export type ChannelInfoEvent<Channel extends string> = [ctx: ChannelInfoEventContext<Channel>]
+    export type RewardEvent<Channel extends string> = [
+        ctx: RewardEventContext<Channel>,
+    ];
 
-      export type ChannelInfoEventContext<Channel extends string> = Context<Channel> & VkWsTypes.ChannelInfo & {
+    export type RewardEventContext<Channel extends string> = Context<Channel> &
+        RewardMessage & {
             /**
-            * Отправить сообещние в канал
-            */
-            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
-      }
-
-      export type StreamStatusEvent<Channel extends string> = [ctx: StreamStatusEventContext<Channel>]
-
-      export type StreamStatusEventContext<Channel extends string> = Context<Channel> & VkWsTypes.StreamStatus & {
+             * Отправить сообещние в канал
+             */
+            sendMessage(
+                text: string,
+                mentionUsers?: number[],
+            ): Promise<APITypes.TMessageResponse>;
             /**
-            * Отправить сообещние в канал
-            */
-            sendMessage(text: string, mentionUsers?: number[]): Promise<APITypes.TMessageResponse>,
-      }
+             * Отметить пользователя в сообщении, и отправить его
+             */
+            reply(
+                text: string,
+                mentionUsers?: number[],
+            ): Promise<APITypes.TMessageResponse>;
+        };
 
-      export type RefreshTokenEvent<Channel extends string> = [ctx: RefreshTokenEventContext<Channel>];
+    export type ChannelInfoEvent<Channel extends string> = [
+        ctx: ChannelInfoEventContext<Channel>,
+    ];
 
-      export type RefreshTokenEventContext<Channel extends string> = Context<Channel> & {
-            auth: TokenAuth,
-      };
+    export type ChannelInfoEventContext<Channel extends string> =
+        Context<Channel> &
+            VkWsTypes.ChannelInfo & {
+                /**
+                 * Отправить сообещние в канал
+                 */
+                sendMessage(
+                    text: string,
+                    mentionUsers?: number[],
+                ): Promise<APITypes.TMessageResponse>;
+            };
+
+    export type StreamStatusEvent<Channel extends string> = [
+        ctx: StreamStatusEventContext<Channel>,
+    ];
+
+    export type StreamStatusEventContext<Channel extends string> =
+        Context<Channel> &
+            VkWsTypes.StreamStatus & {
+                /**
+                 * Отправить сообещние в канал
+                 */
+                sendMessage(
+                    text: string,
+                    mentionUsers?: number[],
+                ): Promise<APITypes.TMessageResponse>;
+            };
+
+    export type RefreshTokenEvent<Channel extends string> = [
+        ctx: RefreshTokenEventContext<Channel>,
+    ];
+
+    export type RefreshTokenEventContext<Channel extends string> =
+        Context<Channel> & {
+            auth: TokenAuth;
+        };
 }

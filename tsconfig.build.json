@@ -1,15 +1,9 @@
 {
-      "$schema": "https://json.schemastore.org/tsconfig",
-      "extends": "./tsconfig.json",
-      "compilerOptions": {
-            "sourceMap": false
-      },
-      "include": [
-            "src/**/*"
-      ],
-      "exclude": [
-            "node_modules",
-            "tests/**/*",
-            "**/*.spec.ts"
-      ]
+    "$schema": "https://json.schemastore.org/tsconfig",
+    "extends": "./tsconfig.json",
+    "compilerOptions": {
+        "sourceMap": false
+    },
+    "include": ["src/**/*"],
+    "exclude": ["node_modules", "tests/**/*", "**/*.spec.ts"]
 }
