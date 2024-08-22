@@ -32,8 +32,15 @@
         "fmt:fix": "prettier --write .",
         "lint": "oxlint --config ./oxlintrc.json",
         "lint:fix": "oxlint --config ./oxlintrc.json --fix",
+        "prepare": "husky",
         "prepublishOnly": "pnpm run lint && pnpm run build && pnpm run test",
         "test": "vitest run"
+    },
+    "lint-staged": {
+        "*": [
+            "pnpm run lint:fix",
+            "pnpm run fmt:fix"
+        ]
     },
     "prettier": "@thearturca/shared-configs/prettier",
     "dependencies": {
@@ -48,6 +55,8 @@
         "@types/node": "^20.16.1",
         "@types/tough-cookie": "^4.0.5",
         "@types/ws": "^8.5.12",
+        "husky": "^9.1.5",
+        "lint-staged": "^15.2.9",
         "nodemon": "^3.1.4",
         "oxlint": "^0.7.2",
         "rimraf": "^6.0.1",
