@@ -511,7 +511,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
 
         res = await fetch(
             "https://account.vkplay.ru/oauth2/?redirect_uri=" +
-            "https%3A%2F%2Flive.vkplay.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1",
+                "https%3A%2F%2Flive.vkplay.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1",
             {
                 method: "GET",
                 headers: {
@@ -601,12 +601,12 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             (await res.json()) as APITypes.RefreshedTokenResponse;
 
         const token: VKPLClientInternal.WithRefreshToken<VKPLClientInternal.AccessTokenAuth> =
-        {
-            accessToken: refreshedToken.access_token,
-            refreshToken: refreshedToken.refresh_token,
-            expiresAt: Date.now() + refreshedToken.expires_in * 1000,
-            clientId: this.auth.clientId,
-        };
+            {
+                accessToken: refreshedToken.access_token,
+                refreshToken: refreshedToken.refresh_token,
+                expiresAt: Date.now() + refreshedToken.expires_in * 1000,
+                clientId: this.auth.clientId,
+            };
 
         this.auth.accessToken = token.accessToken;
         this.auth.refreshToken = token.refreshToken;
