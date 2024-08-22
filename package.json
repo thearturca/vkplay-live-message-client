@@ -30,7 +30,7 @@
         "dev": "tsc --watch --project tsconfig.build.json",
         "fmt": "prettier --check .",
         "fmt:fix": "prettier --write .",
-        "lint": "oxlint --config @thearturca/shared-configs/oxlint",
+        "lint": "oxlint --config ./oxlintrc.json",
         "lint:fix": "oxlint --config ./oxlintrc.json --fix",
         "prepublishOnly": "npm run build && npm run test",
         "test": "vitest run"
