@@ -32,7 +32,7 @@
         "fmt:fix": "prettier --write .",
         "lint": "oxlint --config ./oxlintrc.json",
         "lint:fix": "oxlint --config ./oxlintrc.json --fix",
-        "prepublishOnly": "npm run build && npm run test",
+        "prepublishOnly": "pnpm run lint && pnpm run build && pnpm run test",
         "test": "vitest run"
     },
     "prettier": "@thearturca/shared-configs/prettier",
