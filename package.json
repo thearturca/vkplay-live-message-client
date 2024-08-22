@@ -1,53 +1,62 @@
 {
-      "name": "vklive-message-client",
-      "version": "5.1.0",
-      "description": "TypeScript implementation of vkplay live stream chat client",
-      "main": "./lib/index.js",
-      "exports": "./lib/index.js",
-      "type": "module",
-      "scripts": {
-            "test": "vitest run",
-            "lint": "oxlint --config ./oxlintrc.json --fix",
-            "build": "rimraf lib && tsc --project tsconfig.build.json",
-            "dev": "tsc --watch --project tsconfig.build.json",
-            "prepublishOnly": "npm run build && npm run test"
-      },
-      "keywords": [
-            "vkplay",
-            "vkplay live",
-            "vk chat client",
-            "vkplay live chat client",
-            "chat",
-            "message",
-            "messaging",
-            "interface",
-            "bot"
-      ],
-      "repository": {
-            "type": "git",
-            "url": "https://github.com/thearturca/vkplay-live-message-client"
-      },
-      "author": "thearturca - <arti.1046@gmail.com>",
-      "license": "MIT",
-      "files": [
-            "lib/**/*"
-      ],
-      "dependencies": {
-            "eventemitter3": "^5.0.1",
-            "http-cookie-agent": "^6.0.5",
-            "tough-cookie": "^4.1.4",
-            "undici": "^6.19.8",
-            "ws": "^8.18.0"
-      },
-      "devDependencies": {
-            "@types/node": "^20.16.1",
-            "@types/tough-cookie": "^4.0.5",
-            "@types/ws": "^8.5.12",
-            "nodemon": "^3.1.4",
-            "oxlint": "^0.7.2",
-            "rimraf": "^6.0.1",
-            "ts-node": "^10.9.2",
-            "typescript": "^5.5.4",
-            "vitest": "^2.0.5"
-      }
+    "name": "vklive-message-client",
+    "version": "5.1.0",
+    "description": "TypeScript implementation of vkplay live stream chat client",
+    "keywords": [
+        "vkplay",
+        "vkplay live",
+        "vk chat client",
+        "vkplay live chat client",
+        "chat",
+        "message",
+        "messaging",
+        "interface",
+        "bot"
+    ],
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/thearturca/vkplay-live-message-client"
+    },
+    "license": "MIT",
+    "author": "thearturca - <arti.1046@gmail.com>",
+    "type": "module",
+    "exports": "./lib/index.js",
+    "main": "./lib/index.js",
+    "files": [
+        "lib/**/*"
+    ],
+    "scripts": {
+        "build": "rimraf lib && tsc --project tsconfig.build.json",
+        "dev": "tsc --watch --project tsconfig.build.json",
+        "fmt": "prettier --check .",
+        "fmt:fix": "prettier --write .",
+        "lint": "oxlint --config @thearturca/shared-configs/oxlint",
+        "lint:fix": "oxlint --config ./oxlintrc.json --fix",
+        "prepublishOnly": "npm run build && npm run test",
+        "test": "vitest run"
+    },
+    "prettier": "@thearturca/shared-configs/prettier",
+    "dependencies": {
+        "eventemitter3": "^5.0.1",
+        "http-cookie-agent": "^6.0.5",
+        "tough-cookie": "^4.1.4",
+        "undici": "^6.19.8",
+        "ws": "^8.18.0"
+    },
+    "devDependencies": {
+        "@thearturca/shared-configs": "^1.0.1",
+        "@types/node": "^20.16.1",
+        "@types/tough-cookie": "^4.0.5",
+        "@types/ws": "^8.5.12",
+        "nodemon": "^3.1.4",
+        "oxlint": "^0.7.2",
+        "rimraf": "^6.0.1",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.5.4",
+        "vitest": "^2.0.5"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
+    }
 }
