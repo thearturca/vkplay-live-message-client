@@ -62,11 +62,12 @@ export class CentrifugeClient<
 
         const wsToken = await this.api.getWebSocketConnectToken();
 
-        if (VKPLMessageClient.debugLog)
+        if (VKPLMessageClient.debugLog) {
             console.warn(
                 "[debug:websocket] get websocket token",
                 JSON.stringify(wsToken, null, 5),
             );
+        }
 
         const payload: VkWsTypes.Method<VkWsTypes.ConnectMethod> = {
             connect: {
@@ -87,12 +88,16 @@ export class CentrifugeClient<
             (method) => method.id === wsMessage.id,
         );
 
-        if (methodIndex === -1) return;
+        if (methodIndex === -1) {
+            return;
+        }
 
         const method: vkplWsMethod<unknown> | undefined =
             this.methods[methodIndex];
 
-        if (!method) return;
+        if (!method) {
+            return;
+        }
 
         method.callbBack(wsMessage.result);
         this.methods.splice(methodIndex, 1);
@@ -105,15 +110,18 @@ export class CentrifugeClient<
             this.currentMethodId += 1;
             payload.id = this.currentMethodId;
 
-            if (VKPLMessageClient.debugLog)
+            if (VKPLMessageClient.debugLog) {
                 console.warn(
                     "[debug:websocket] invoking live.vkplay.ru websocket method",
                     JSON.stringify(payload, null, 4),
                 );
+            }
 
             this.methods.push({ id: payload.id, callbBack: resolve });
             this.socket?.send(JSON.stringify(payload), (error) => {
-                if (error) reject(error);
+                if (error) {
+                    reject(error);
+                }
             });
         });
     }
@@ -177,22 +185,25 @@ export class CentrifugeClient<
 
         const data: Record<string, unknown> = JSON.parse(event.data as string);
 
-        if (VKPLMessageClient.debugLog)
+        if (VKPLMessageClient.debugLog) {
             console.warn(
                 "[debug:websocket] new message",
                 JSON.stringify(data, null, 4),
             );
+        }
 
-        if ("id" in data)
+        if ("id" in data) {
             this.resolveMethod(data as VkWsTypes.WsMethodResponse<{}>);
+        }
 
         const chatMessage = data as VkWsTypes.WsMessage<VkWsTypes.ChatMessage>;
 
         if (
             chatMessage.push?.pub.data &&
             chatMessage.push?.pub?.data.type === "message"
-        )
+        ) {
             this.emit("message", chatMessage);
+        }
 
         const rewardMessage =
             data as VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>;
@@ -200,16 +211,18 @@ export class CentrifugeClient<
         if (
             rewardMessage.push?.pub &&
             rewardMessage.push?.pub?.data.type === "cp_reward_demand"
-        )
+        ) {
             this.emit("reward", rewardMessage);
+        }
 
         const channelInfo = data as VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>;
 
         if (
             channelInfo.push?.pub &&
             channelInfo.push?.pub?.data.type === "stream_online_status"
-        )
+        ) {
             this.emit("channel-info", channelInfo);
+        }
 
         const streamStatus =
             data as VkWsTypes.WsMessage<VkWsTypes.StreamStatus>;
@@ -218,16 +231,17 @@ export class CentrifugeClient<
             streamStatus.push?.pub &&
             (streamStatus.push?.pub?.data.type === "stream_end" ||
                 streamStatus.push?.pub?.data.type === "stream_start")
-        )
+        ) {
             this.emit("stream-status", streamStatus);
+        }
     }
 
     public async onClose(event: WebSocket.CloseEvent): Promise<void> {
-        if (event.wasClean)
+        if (event.wasClean) {
             console.log(
                 `[close] Connection closed clean, code=${event.code} reason=${event.reason}`,
             );
-        else {
+        } else {
             console.error("[close] Connection interrupted");
             console.log("[close] Trying to reconnect...");
             await this.connect();

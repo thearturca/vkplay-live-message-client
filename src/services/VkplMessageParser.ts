@@ -10,6 +10,7 @@ export class VkplMessageParser {
         message: string,
     ): [string, RegExpMatchArray[]] {
         const markdownLinks = Array.from(message.matchAll(markdownLinkRegex));
+
         return [
             message.replaceAll(markdownLinkRegex, (substring) => {
                 const index = markdownLinks.findIndex(
@@ -27,9 +28,11 @@ export class VkplMessageParser {
     ): APITypes.TMessageBlock[] {
         const serializedMessage: APITypes.TMessageBlock[] = [];
 
-        if (mentionIds)
-            for (const mentionId of mentionIds)
+        if (mentionIds) {
+            for (const mentionId of mentionIds) {
                 serializedMessage.push(...this.getMentionBlock(mentionId));
+            }
+        }
 
         const [messageWithoutMarkdownLinks, markdownLinks] =
             VkplMessageParser.replaceMarkdownLinks(message);
@@ -72,7 +75,9 @@ export class VkplMessageParser {
 
                     const link = markdownLinks[mdlIndex][2];
 
-                    if (!link) continue;
+                    if (!link) {
+                        continue;
+                    }
 
                     const text = markdownLinks[mdlIndex][1] || link;
 
@@ -157,31 +162,25 @@ export class VkplMessageParser {
                         userId: blockAsBlockMention.id,
                     });
 
-                    if ((block as APITypes.TMessageBlockMention).displayName)
-                        deserializedMessage.text =
-                            deserializedMessage.text.trim() +
-                            " " +
-                            blockAsBlockMention.displayName;
+                    if (blockAsBlockMention.displayName) {
+                        deserializedMessage.text = `${deserializedMessage.text.trim()} ${blockAsBlockMention.displayName}`;
+                    }
 
                     break;
 
                 case "text":
-                    deserializedMessage.text =
-                        deserializedMessage.text.trim() +
-                        " " +
-                        (block.content && block.content.length > 0
+                    deserializedMessage.text = `${deserializedMessage.text.trim()} ${
+                        block.content && block.content.length > 0
                             ? JSON.parse(block.content)[0]
-                            : "");
+                            : ""
+                    }`;
                     break;
 
                 case "smile":
                     deserializedMessage.smiles.push(
                         block as APITypes.TMessageBlockSmile,
                     );
-                    deserializedMessage.text =
-                        deserializedMessage.text.trim() +
-                        " " +
-                        (block as APITypes.TMessageBlockSmile).name;
+                    deserializedMessage.text = `${deserializedMessage.text.trim()} ${(block as APITypes.TMessageBlockSmile).name}`;
                     break;
 
                 case "link":
@@ -189,12 +188,11 @@ export class VkplMessageParser {
                         text: block.content,
                         url: (block as APITypes.TMessageBlockLink).url,
                     });
-                    deserializedMessage.text =
-                        deserializedMessage.text.trim() +
-                        " " +
-                        (block.content && block.content.length > 0
+                    deserializedMessage.text = `${deserializedMessage.text.trim()} ${
+                        block.content && block.content.length > 0
                             ? JSON.parse(block.content)[0]
-                            : "");
+                            : ""
+                    }`;
                     break;
 
                 default:

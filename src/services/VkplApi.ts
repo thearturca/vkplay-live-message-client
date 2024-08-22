@@ -22,13 +22,17 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     }
 
     protected addAuthorizationHeader(headers: Headers): void {
-        if (!this.auth) return;
+        if (!this.auth) {
+            return;
+        }
 
-        if (!headers.has("Authorization"))
+        if (!headers.has("Authorization")) {
             headers.append("Authorization", `Bearer ${this.auth.accessToken}`);
+        }
 
-        if ("clientId" in this.auth)
+        if ("clientId" in this.auth) {
             headers.append("X-From-Id", this.auth.clientId);
+        }
     }
 
     /**
@@ -42,7 +46,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             "GET",
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -58,7 +64,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             "GET",
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -72,7 +80,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             "GET",
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -83,7 +93,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             "GET",
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -102,7 +114,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
                 params,
             );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -135,7 +149,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             }),
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -164,7 +180,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             }),
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -187,7 +205,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             query,
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -206,7 +226,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             query,
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -228,7 +250,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             query,
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -246,7 +270,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             "GET",
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -277,7 +303,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             }),
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -297,28 +325,32 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     ): Promise<APITypes.ManageStreamResponse> {
         const body = new URLSearchParams();
 
-        if (streamInfo.title)
+        if (streamInfo.title) {
             body.append(
                 "title_data",
                 JSON.stringify(this.messageParser.serialize(streamInfo.title)),
             );
+        }
 
-        if (streamInfo.categoryId)
+        if (streamInfo.categoryId) {
             body.append("category_id", streamInfo.categoryId);
+        }
 
         if (streamInfo.plannedAt) {
             const timestamp = Math.floor(streamInfo.plannedAt.getTime() / 1000);
             body.append("planned_at", timestamp.toString());
         }
 
-        if (streamInfo.donationAlertNick)
+        if (streamInfo.donationAlertNick) {
             body.append("da_nick", streamInfo.donationAlertNick);
+        }
 
-        if (streamInfo.subscriptionLevelId)
+        if (streamInfo.subscriptionLevelId) {
             body.append(
                 "subscription_level_id",
                 streamInfo.subscriptionLevelId,
             );
+        }
 
         const res = await this.httpRequest<APITypes.ManageStreamResponse>(
             `/channel/${channel}/manage/stream`,
@@ -330,7 +362,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             }),
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -346,11 +380,17 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     ): Promise<APITypes.CategoryResponse> {
         const query = new URLSearchParams();
 
-        if (filters?.type) query.append("type", filters.type);
+        if (filters?.type) {
+            query.append("type", filters.type);
+        }
 
-        if (filters?.search) query.append("search", filters.search);
+        if (filters?.search) {
+            query.append("search", filters.search);
+        }
 
-        if (filters?.limit) query.append("limit", filters.limit.toString());
+        if (filters?.limit) {
+            query.append("limit", filters.limit.toString());
+        }
 
         const res = await this.httpRequest<APITypes.CategoryResponse>(
             "/public_video_stream/category/",
@@ -358,7 +398,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             query,
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         return res;
     }
@@ -413,7 +455,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         };
         const body = new URLSearchParams(serializedMessage);
 
-        if (threadId) body.set("reply_to_id", threadId.toString());
+        if (threadId) {
+            body.set("reply_to_id", threadId.toString());
+        }
 
         const res = await this.httpRequest<APITypes.TMessageResponse>(
             `/blog/${channel}/public_video_stream/chat`,
@@ -425,7 +469,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             }),
         );
 
-        if (typeof res === "string") throw new Error(res);
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
 
         if (VKPLMessageClient.debugLog)
             console.warn("[debug:send-message] ", JSON.stringify(res, null, 4));
@@ -459,7 +505,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             dispatcher: agent,
         });
 
-        if (!res.ok) throw new Error("[api] Cannot get token");
+        if (!res.ok) {
+            throw new Error("[api] Cannot get token");
+        }
 
         res = await fetch(
             "https://account.vkplay.ru/oauth2/?redirect_uri=" +
@@ -474,18 +522,24 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             },
         );
 
-        if (!res.ok) throw new Error("[api] Cannot get token");
+        if (!res.ok) {
+            throw new Error("[api] Cannot get token");
+        }
 
         res = await fetch("https://live.vkplay.ru", {
             dispatcher: agent,
         });
 
-        if (!res.ok) throw new Error("[api] Cannot get token");
+        if (!res.ok) {
+            throw new Error("[api] Cannot get token");
+        }
 
         const cookies = await jar.getCookies("https://live.vkplay.ru");
         const tokenCookie = cookies.find((c) => c.key === "auth");
 
-        if (!tokenCookie) throw new Error("[api] Cannot get token cookie");
+        if (!tokenCookie) {
+            throw new Error("[api] Cannot get token cookie");
+        }
 
         const parsedToken = JSON.parse(
             decodeURIComponent(tokenCookie.value),
@@ -497,16 +551,21 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     public static readonly tokenExpiresShift = 10 * 60 * 1000; // 10 min
 
     public isTokenExpired(): boolean {
-        if (!this.auth) return false;
+        if (!this.auth) {
+            return false;
+        }
 
-        if (!("expiresAt" in this.auth)) return false;
+        if (!("expiresAt" in this.auth)) {
+            return false;
+        }
 
         return this.auth.expiresAt - VkplApi.tokenExpiresShift < Date.now();
     }
 
     public async refreshToken(): Promise<VKPLClientInternal.TokenAuth> {
-        if (!this.auth)
+        if (!this.auth) {
             throw new TypeError("Auth must be provided to refresh token");
+        }
 
         if (!("refreshToken" in this.auth))
             throw new TypeError(
@@ -558,7 +617,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         return token;
     }
 
-    protected async httpRequest<T>(
+    protected async httpRequest<T = string>(
         endpoint: `/${string}`,
         method: HTTPMethod,
         query?: URLSearchParams,
@@ -569,14 +628,13 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
 
         this.addAuthorizationHeader(headers);
 
-        const response = await fetch(
-            `${this.baseUrl}${endpoint}?${new URLSearchParams(query)}`,
-            {
-                method,
-                headers,
-                body,
-            },
-        );
+        const url = `${this.baseUrl}${endpoint}?${new URLSearchParams(query)}`;
+
+        const response = await fetch(url, {
+            method,
+            headers,
+            body,
+        });
 
         if (response.status >= 400) {
             throw new Error(
