@@ -6,6 +6,7 @@ import VKPLMessageClient from "../client.js";
 import { APITypes } from "../types/api.js";
 import { HTTPMethod } from "../types/http.js";
 import { VKPLClientInternal } from "../types/internal.js";
+import { DeferredPromise } from "../utils/index.js";
 import { VkplMessageParser } from "./VkplMessageParser.js";
 
 type VkplApiEventMap = {
@@ -13,6 +14,8 @@ type VkplApiEventMap = {
 };
 
 export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
+    private refreshTokenPromise?: DeferredPromise<VKPLClientInternal.TokenAuth>;
+
     constructor(
         private messageParser: VkplMessageParser,
         public auth?: VKPLClientInternal.TokenAuth,
@@ -559,7 +562,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             return false;
         }
 
-        return this.auth.expiresAt - VkplApi.tokenExpiresShift < Date.now();
+        return this.auth.expiresAt - VkplApi.tokenExpiresShift <= Date.now();
     }
 
     public async refreshToken(): Promise<VKPLClientInternal.TokenAuth> {
@@ -572,49 +575,60 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
                 "Refresh token must be provided to refresh token",
             );
 
-        const body = new URLSearchParams({
-            response_type: "code",
-            refresh_token: this.auth.refreshToken,
-            grant_type: "refresh_token",
-            device_id: this.auth.clientId,
-            device_os: "streams_web",
-        });
+        if (this.refreshTokenPromise) {
+            return await this.refreshTokenPromise.promise;
+        }
 
-        const res = await fetch("https://api.live.vkplay.ru/oauth/token/", {
-            method: "POST",
-            body: body.toString(),
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                origin: "https://live.vkplay.ru",
-                referer: "https://live.vkplay.ru",
-                "User-Agent":
-                    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
-            },
-        });
+        this.refreshTokenPromise = new DeferredPromise();
 
-        if (!res.ok)
-            throw new Error("[api] Cannot refresh token", {
-                cause: await res.text(),
+        try {
+            const body = new URLSearchParams({
+                response_type: "code",
+                refresh_token: this.auth.refreshToken,
+                grant_type: "refresh_token",
+                device_id: this.auth.clientId,
+                device_os: "streams_web",
             });
 
-        const refreshedToken =
-            (await res.json()) as APITypes.RefreshedTokenResponse;
+            const res = await fetch("https://api.live.vkplay.ru/oauth/token/", {
+                method: "POST",
+                body: body.toString(),
+                headers: {
+                    "Content-Type": "application/x-www-form-urlencoded",
+                    origin: "https://live.vkplay.ru",
+                    referer: "https://live.vkplay.ru",
+                    "User-Agent":
+                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+                },
+            });
 
-        const token: VKPLClientInternal.WithRefreshToken<VKPLClientInternal.AccessTokenAuth> =
-            {
-                accessToken: refreshedToken.access_token,
-                refreshToken: refreshedToken.refresh_token,
-                expiresAt: Date.now() + refreshedToken.expires_in * 1000,
-                clientId: this.auth.clientId,
-            };
+            if (!res.ok)
+                throw new Error("[api] Cannot refresh token", {
+                    cause: await res.text(),
+                });
 
-        this.auth.accessToken = token.accessToken;
-        this.auth.refreshToken = token.refreshToken;
-        this.auth.expiresAt = token.expiresAt;
+            const refreshedToken =
+                (await res.json()) as APITypes.RefreshedTokenResponse;
 
-        this.emit("refreshed", token);
+            const token: VKPLClientInternal.WithRefreshToken<VKPLClientInternal.AccessTokenAuth> =
+                {
+                    accessToken: refreshedToken.access_token,
+                    refreshToken: refreshedToken.refresh_token,
+                    expiresAt: Date.now() + refreshedToken.expires_in * 1000,
+                    clientId: this.auth.clientId,
+                };
 
-        return token;
+            this.auth.accessToken = token.accessToken;
+            this.auth.refreshToken = token.refreshToken;
+            this.auth.expiresAt = token.expiresAt;
+
+            this.refreshTokenPromise.resolve(token);
+            this.emit("refreshed", token);
+
+            return token;
+        } finally {
+            this.refreshTokenPromise = undefined;
+        }
     }
 
     protected async httpRequest<T = string>(
@@ -624,7 +638,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         body?: string | FormData,
         headers: Headers = new Headers(),
     ): Promise<T | string> {
-        if (this.isTokenExpired()) await this.refreshToken();
+        if (this.isTokenExpired()) {
+            await this.refreshToken();
+        }
 
         this.addAuthorizationHeader(headers);
 
