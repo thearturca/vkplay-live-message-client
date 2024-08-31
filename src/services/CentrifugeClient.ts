@@ -183,7 +183,14 @@ export class CentrifugeClient<
             return;
         }
 
-        const data: Record<string, unknown> = JSON.parse(event.data as string);
+        let data: Record<string, unknown>;
+
+        try {
+            data = JSON.parse(event.data as string);
+        } catch (error) {
+            console.error(error);
+            return;
+        }
 
         if (VKPLMessageClient.debugLog) {
             console.warn(
