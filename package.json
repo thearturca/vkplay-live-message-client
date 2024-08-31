@@ -38,8 +38,8 @@
     },
     "lint-staged": {
         "*": [
-            "pnpm run lint:fix",
-            "pnpm run fmt:fix"
+            "pnpm run lint",
+            "pnpm run fmt"
         ]
     },
     "prettier": "@thearturca/shared-configs/prettier",
