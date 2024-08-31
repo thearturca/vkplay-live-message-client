@@ -26,7 +26,7 @@ importers:
     devDependencies:
       '@thearturca/shared-configs':
         specifier: ^1.0.1
-        version: 1.0.1(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.9.1)(prettier@3.3.3)(typescript@5.5.4)
+        version: 1.1.0(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.7.2)(prettier@3.3.3)(typescript@5.5.4)
       '@types/node':
         specifier: ^20.16.1
         version: 20.16.1
@@ -444,8 +444,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@thearturca/shared-configs@1.0.1':
-    resolution: {integrity: sha512-bwEjLbnmAWgyIte0fF5/iwhA2cPi0jeIO604i+cpcocFmNw6EacsipNMWlqdFkH/lIzs23RdlOBMAWz4qMM1jw==}
+  '@thearturca/shared-configs@1.1.0':
+    resolution: {integrity: sha512-p+1jwzGhzDu27n/m2QDdRYFnXuBeGwknuxPlb0cipGR5cGG4yiWhe1g5c1lk0plIZt5fiuCXX+mHrFTjwW6shw==}
     engines: {node: '>=20'}
     peerDependencies:
       '@ianvs/prettier-plugin-sort-imports': 4.1.1
@@ -1597,7 +1597,7 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.21.0':
     optional: true
 
-  '@thearturca/shared-configs@1.0.1(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.9.1)(prettier@3.3.3)(typescript@5.5.4)':
+  '@thearturca/shared-configs@1.1.0(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.7.2)(prettier@3.3.3)(typescript@5.5.4)':
     dependencies:
       '@ianvs/prettier-plugin-sort-imports': 4.1.1(prettier@3.3.3)
       prettier-plugin-packagejson: 2.5.1(prettier@3.3.3)
