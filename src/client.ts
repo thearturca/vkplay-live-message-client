@@ -71,6 +71,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
      * @property debugLog - Если true, то будет выводить логи вебсокета и API в консоль
      */
     public static debugLog: boolean;
+    public static log: boolean = true;
 
     private centrifugeClient: CentrifugeClient<T>;
     private messageParser: VkplMessageParser;
@@ -93,6 +94,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         super();
 
         VKPLMessageClient.debugLog = config.debugLog ?? false;
+        VKPLMessageClient.log = config.log ?? true;
 
         if (config.auth && config.auth !== "readonly") {
             if ("accessToken" in config.auth) {
@@ -235,9 +237,11 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
             api: this.api,
         };
         this.emit("message", ctx);
-        console.log(
-            `[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`,
-        );
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`,
+            );
+        }
     }
 
     private onReward(
@@ -278,9 +282,12 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
             api: this.api,
         };
         this.emit("reward", ctx);
-        console.log(
-            `[reward:${channel.blogUrl}] ${reward.user.nick} reedemed reward: "${reward.reward.name}" ${reward.reward.message ? `with text "${reward.reward.message.text}"` : ""}`,
-        );
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[reward:${channel.blogUrl}] ${reward.user.nick} reedemed reward: "${reward.reward.name}" ${reward.reward.message ? `with text "${reward.reward.message.text}"` : ""}`,
+            );
+        }
     }
 
     private onChannelInfo(
@@ -309,9 +316,12 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         };
 
         this.emit("channel-info", ctx);
-        console.log(
-            `[channelInfo:${channel.blogUrl}] viewers: ${channelInfo.viewers}, isOnline: ${channelInfo.isOnline}, streamId: ${channelInfo.streamId}`,
-        );
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[channelInfo:${channel.blogUrl}] viewers: ${channelInfo.viewers}, isOnline: ${channelInfo.isOnline}, streamId: ${channelInfo.streamId}`,
+            );
+        }
     }
 
     private onStreamStatus(
@@ -340,9 +350,12 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         };
 
         this.emit("stream-status", ctx);
-        console.log(
-            `[streamStatus:${channel.blogUrl}] ${streamStatus.type}, videoId: ${streamStatus.videoId}`,
-        );
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[streamStatus:${channel.blogUrl}] ${streamStatus.type}, videoId: ${streamStatus.videoId}`,
+            );
+        }
     }
 
     private onStreamLikeCounter(
@@ -371,9 +384,12 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         };
 
         this.emit("stream-like-counter", ctx);
-        console.log(
-            `[streamLikeCounter:${channel.blogUrl}] userId: ${likesCount.userId}, counter: ${likesCount.counter}`,
-        );
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[streamLikeCounter:${channel.blogUrl}] userId: ${likesCount.userId}, counter: ${likesCount.counter}`,
+            );
+        }
     }
 
     private async onReconnect(): Promise<void> {

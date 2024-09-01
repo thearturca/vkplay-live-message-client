@@ -35,6 +35,7 @@ export namespace VKPLClientInternal {
         auth: Auth;
         wsServer?: string;
         debugLog?: boolean;
+        log?: boolean;
     };
 
     export type Channel = {
