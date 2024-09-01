@@ -226,4 +226,20 @@ export namespace VKPLClientInternal {
         Context<Channel> & {
             auth: TokenAuth;
         };
+
+    export type StreamLikeCounterEventContext<Channel extends string> =
+        Context<Channel> &
+            VkWsTypes.StreamLikeCounter & {
+                /**
+                 * Отправить сообещние в канал
+                 */
+                sendMessage(
+                    text: string,
+                    mentionUsers?: number[],
+                ): Promise<APITypes.TMessageResponse>;
+            };
+
+    export type StreamLikeCounterEvent<Channel extends string> = [
+        ctx: StreamLikeCounterEventContext<Channel>,
+    ];
 }

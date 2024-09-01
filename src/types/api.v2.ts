@@ -209,7 +209,21 @@ export namespace VkWsTypes {
         streamId: string;
     };
 
-    export type WsMessage<T extends Record<string, unknown>> = {
+    export type StreamLikeCounter = {
+        counter: number;
+        userId: number;
+        type: "stream_like_counter";
+    };
+
+    export type WsMessageBody =
+        | ChatMessage
+        | ActionsJournalNewEventRewardDemandMessage
+        | CpRewardDemandMessage
+        | StreamStatus
+        | ChannelInfo
+        | StreamLikeCounter;
+
+    export type WsMessage<T extends WsMessageBody = WsMessageBody> = {
         push: {
             channel: string;
             pub: {
