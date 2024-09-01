@@ -223,7 +223,10 @@ export class CentrifugeClient<
             "pub" in message.push &&
             typeof message.push.pub === "object" &&
             message.push.pub !== null &&
-            "type" in message.push.pub
+            "data" in message.push.pub &&
+            typeof message.push.pub.data === "object" &&
+            message.push.pub.data !== null &&
+            "type" in message.push.pub.data
         );
     }
 
