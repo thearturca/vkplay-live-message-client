@@ -74,7 +74,8 @@ export class CentrifugeClient<
             id: 0,
         };
 
-        await this.invokeMethod(payload);
+        const openResult = await this.invokeMethod(payload);
+        console.log("[open] Open result", JSON.stringify(openResult, null, 4));
         console.log("[open] Connected");
     }
 
@@ -96,13 +97,13 @@ export class CentrifugeClient<
             return;
         }
 
-        method.callbBack(wsMessage.result);
+        method.callbBack(wsMessage);
         this.methods.splice(methodIndex, 1);
     }
 
-    public async invokeMethod<T extends Record<string, unknown>>(
+    public async invokeMethod<T extends Record<string, unknown>, R = unknown>(
         payload: VkWsTypes.Method<T>,
-    ): Promise<unknown> {
+    ): Promise<R> {
         return new Promise((resolve, reject) => {
             this.currentMethodId += 1;
             payload.id = this.currentMethodId;
@@ -114,7 +115,10 @@ export class CentrifugeClient<
                 );
             }
 
-            this.methods.push({ id: payload.id, callbBack: resolve });
+            this.methods.push({
+                id: payload.id,
+                callbBack: resolve as vkplWsCallback<unknown>,
+            });
             this.socket?.send(JSON.stringify(payload), (error) => {
                 if (error) {
                     reject(error);
