@@ -296,4 +296,35 @@ export namespace APITypes {
             }[];
         };
     };
+
+    export type Reaction = {
+        type: string;
+        count: number;
+    };
+
+    export type PinSettings = {
+        messageId: number;
+        reactable: boolean;
+        kind: "permanent" | "stream";
+    };
+
+    export type PinMessage = {
+        writtenAt: number;
+        reactable: boolean;
+        author: TUser;
+        pinner: TUser;
+        id: number;
+        data: TMessageBlock[];
+        period: null;
+        reactions: Reaction[];
+        kind: "permanent" | "stream";
+        reacted: string | null;
+        createdAt: number;
+    };
+
+    export type PinMessageResponse = {
+        data: {
+            pinnedMessage: PinMessage;
+        };
+    };
 }

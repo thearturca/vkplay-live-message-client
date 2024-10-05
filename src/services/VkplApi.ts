@@ -50,6 +50,107 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     }
 
     /**
+     * Получить закреплённое сообщение в чате
+     *
+     * @param channel - название канала
+     */
+    public async getPinMessage(channel: T): Promise<APITypes.PinMessage> {
+        const res = await this.httpRequest<APITypes.PinMessageResponse>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "GET",
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res.data.pinnedMessage;
+    }
+
+    /**
+     * Перманентно закрепляет сообщение в чате
+     *
+     * @param channel - название канала
+     * @param pinSettings - настройки закрепленного сообщения
+     */
+    public async pinMessage(
+        channel: T,
+        pinSettings: APITypes.PinSettings,
+    ): Promise<{}> {
+        const body = new URLSearchParams({
+            kind: pinSettings.kind,
+            message_id: pinSettings.messageId.toString(),
+            reactable: pinSettings.reactable.toString(),
+        });
+
+        const res = await this.httpRequest<{}>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "POST",
+            undefined,
+            body.toString(),
+            new Headers({
+                "Content-type": "application/x-www-form-urlencoded",
+            }),
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res;
+    }
+
+    /**
+     * Обновляет настройки закрплённого сообщения в чате
+     *
+     * @param channel - название канала
+     * @param pinSettings - настройки закрепленного сообщения
+     */
+    public async updatePinMessage(
+        channel: T,
+        pinSettings: Omit<APITypes.PinSettings, "messageId">,
+    ): Promise<{}> {
+        const body = new URLSearchParams({
+            kind: pinSettings.kind,
+            reactable: pinSettings.reactable.toString(),
+        });
+
+        const res = await this.httpRequest<{}>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "PUT",
+            undefined,
+            body.toString(),
+            new Headers({
+                "Content-type": "application/x-www-form-urlencoded",
+            }),
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res;
+    }
+
+    /**
+     * Удаляет закреплённое сообщение
+     *
+     * @param channel - название канала
+     */
+    public async deletePinMessage(channel: T): Promise<{}> {
+        const res = await this.httpRequest<{}>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "DELETE",
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res;
+    }
+
+    /**
      * Получает список смайлов канала
      *
      * @param channel - название канала
@@ -674,18 +775,25 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             });
 
             if (response.status >= 400) {
-                const error = await response.clone().json();
+                try {
+                    const error = await response.clone().json();
 
-                if (this.isCantSendError(error)) {
-                    const delay = Math.max(
-                        ...error.data.reasons
-                            .filter((r) => r.type === "slow_mode_cooldown")
-                            .map((r) => r.remaningTime),
+                    if (this.isCantSendError(error)) {
+                        const delay = Math.max(
+                            ...error.data.reasons
+                                .filter((r) => r.type === "slow_mode_cooldown")
+                                .map((r) => r.remaningTime),
+                        );
+
+                        await sleep(delay * 1000);
+                        continue;
+                    }
+                } catch {
+                    throw new Error(
+                        `[api:${response.status}] Error in request: ${await response.clone().text()}`,
                     );
-
-                    await sleep(delay * 1000);
-                    continue;
                 }
+
                 throw new Error(
                     `[api:${response.status}] Error in request: ${await response.clone().text()}`,
                 );

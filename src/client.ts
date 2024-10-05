@@ -79,7 +79,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
     public static log: boolean = true;
 
     private centrifugeClient: CentrifugeClient<T>;
-    private messageParser: VkplMessageParser;
+    public messageParser: VkplMessageParser;
 
     private channelNames: T[];
 
