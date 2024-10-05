@@ -32,9 +32,14 @@ type VKPLMessageClientEventMap<Channel extends string> = {
     "refresh-token": VKPLClientInternal.RefreshTokenEvent<Channel>;
 
     /**
-     * Событие о изменении количества лайков канала
+     * Событие о изменении количества лайков канала
      */
     "stream-like-counter": VKPLClientInternal.StreamLikeCounterEvent<Channel>;
+
+    /*
+     * Событие о получении нового подписчика
+     */
+    follower: VKPLClientInternal.FollowerEvent<Channel>;
 };
 
 /**
@@ -168,6 +173,17 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         return message.push.pub.data.type === "stream_like_counter";
     }
 
+    private isFollower(
+        message: VkWsTypes.WsMessage,
+    ): message is VkWsTypes.WsMessage<
+        VkWsTypes.ActionsJournalNewEvent<VkWsTypes.ActionsJournalFollower>
+    > {
+        return (
+            message.push.pub.data.type === "actions_journal_new_event" &&
+            message.push.pub.data.data.type === "actions_journal_follower"
+        );
+    }
+
     private onCentrifugoMessage(message: VkWsTypes.WsMessage): void {
         switch (true) {
             case this.isChatMessage(message):
@@ -188,6 +204,10 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
 
             case this.isStreamLikeCounterMessage(message):
                 this.onStreamLikeCounter(message);
+                break;
+
+            case this.isFollower(message):
+                this.onFollower(message);
                 break;
         }
     }
@@ -388,6 +408,42 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         if (VKPLMessageClient.log) {
             console.log(
                 `[streamLikeCounter:${channel.blogUrl}] userId: ${likesCount.userId}, counter: ${likesCount.counter}`,
+            );
+        }
+    }
+
+    private onFollower(
+        message: VkWsTypes.WsMessage<
+            VkWsTypes.ActionsJournalNewEvent<VkWsTypes.ActionsJournalFollower>
+        >,
+    ): void {
+        const channelId = message.push.channel.split(":")[1];
+
+        if (!channelId) {
+            return;
+        }
+
+        const channel: VKPLClientInternal.Channel | undefined =
+            this.findChannelById(channelId);
+
+        // skip message since we are not subscribed to this channel
+        if (!channel) {
+            return;
+        }
+
+        const followerInfo = message.push.pub.data.data;
+        const ctx: VKPLClientInternal.FollowerEventContext<T> = {
+            ...followerInfo,
+            api: this.api,
+            sendMessage: async (text: string, mentionUsers?: number[]) =>
+                this.api.sendMessage(text, channel.blogUrl as T, mentionUsers),
+        };
+
+        this.emit("follower", ctx);
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[follower:${channel.blogUrl}] +1 ${followerInfo.follower.displayName}`,
             );
         }
     }

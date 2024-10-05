@@ -243,4 +243,20 @@ export namespace VKPLClientInternal {
     export type StreamLikeCounterEvent<Channel extends string> = [
         ctx: StreamLikeCounterEventContext<Channel>,
     ];
+
+    export type FollowerEventContext<Channel extends string> =
+        Context<Channel> &
+            VkWsTypes.ActionsJournalFollower & {
+                /**
+                 * Отправить сообещние в канал
+                 */
+                sendMessage(
+                    text: string,
+                    mentionUsers?: number[],
+                ): Promise<APITypes.TMessageResponse>;
+            };
+
+    export type FollowerEvent<Channel extends string> = [
+        ctx: FollowerEventContext<Channel>,
+    ];
 }

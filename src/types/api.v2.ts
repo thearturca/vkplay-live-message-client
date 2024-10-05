@@ -162,20 +162,28 @@ export namespace VkWsTypes {
         isUnlimited: boolean;
     };
 
-    export type ActionsJournalNewEventRewardDemandMessage = {
-        data: {
-            action_time: number;
-            type: "reward_demand" | string;
-            reward_demand: {
-                status: string;
-                user: User;
-                activationMessage: ChatMessageBlock[];
-                demandId: number;
-                reward: Reward;
-                createdAt: number;
-            };
-        };
+    export type ActionsJournalNewEvent<T> = {
+        data: T;
         type: "actions_journal_new_event";
+    };
+
+    export type ActionsJournalRewardDemandMessage = {
+        action_time: number;
+        type: "reward_demand" | string;
+        reward_demand: {
+            status: string;
+            user: User;
+            activationMessage: ChatMessageBlock[];
+            demandId: number;
+            reward: Reward;
+            createdAt: number;
+        };
+    };
+
+    export type ActionsJournalFollower = {
+        follower: User;
+        action_time: number;
+        type: "following";
     };
 
     export type RewardStatus = "approved" | "pending" | "rejected";
@@ -217,7 +225,8 @@ export namespace VkWsTypes {
 
     export type WsMessageBody =
         | ChatMessage
-        | ActionsJournalNewEventRewardDemandMessage
+        | ActionsJournalNewEvent<ActionsJournalRewardDemandMessage>
+        | ActionsJournalNewEvent<ActionsJournalFollower>
         | CpRewardDemandMessage
         | StreamStatus
         | ChannelInfo
