@@ -35,6 +35,7 @@ export namespace VKPLClientInternal {
         auth: Auth;
         wsServer?: string;
         debugLog?: boolean;
+        log?: boolean;
     };
 
     export type Channel = {
@@ -226,4 +227,36 @@ export namespace VKPLClientInternal {
         Context<Channel> & {
             auth: TokenAuth;
         };
+
+    export type StreamLikeCounterEventContext<Channel extends string> =
+        Context<Channel> &
+            VkWsTypes.StreamLikeCounter & {
+                /**
+                 * Отправить сообещние в канал
+                 */
+                sendMessage(
+                    text: string,
+                    mentionUsers?: number[],
+                ): Promise<APITypes.TMessageResponse>;
+            };
+
+    export type StreamLikeCounterEvent<Channel extends string> = [
+        ctx: StreamLikeCounterEventContext<Channel>,
+    ];
+
+    export type FollowerEventContext<Channel extends string> =
+        Context<Channel> &
+            VkWsTypes.ActionsJournalFollower & {
+                /**
+                 * Отправить сообещние в канал
+                 */
+                sendMessage(
+                    text: string,
+                    mentionUsers?: number[],
+                ): Promise<APITypes.TMessageResponse>;
+            };
+
+    export type FollowerEvent<Channel extends string> = [
+        ctx: FollowerEventContext<Channel>,
+    ];
 }

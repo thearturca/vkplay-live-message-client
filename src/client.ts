@@ -30,6 +30,16 @@ type VKPLMessageClientEventMap<Channel extends string> = {
      * Событие о получении нового токена. Понадобится для сохранения нового токена, и восстановления работы бота без надобности идти на сайт
      */
     "refresh-token": VKPLClientInternal.RefreshTokenEvent<Channel>;
+
+    /**
+     * Событие о изменении количества лайков канала
+     */
+    "stream-like-counter": VKPLClientInternal.StreamLikeCounterEvent<Channel>;
+
+    /*
+     * Событие о получении нового подписчика
+     */
+    follower: VKPLClientInternal.FollowerEvent<Channel>;
 };
 
 /**
@@ -66,9 +76,10 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
      * @property debugLog - Если true, то будет выводить логи вебсокета и API в консоль
      */
     public static debugLog: boolean;
+    public static log: boolean = true;
 
     private centrifugeClient: CentrifugeClient<T>;
-    private messageParser: VkplMessageParser;
+    public messageParser: VkplMessageParser;
 
     private channelNames: T[];
 
@@ -88,6 +99,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         super();
 
         VKPLMessageClient.debugLog = config.debugLog ?? false;
+        VKPLMessageClient.log = config.log ?? true;
 
         if (config.auth && config.auth !== "readonly") {
             if ("accessToken" in config.auth) {
@@ -112,14 +124,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         );
 
         this.centrifugeClient.on("message", (message) =>
-            this.onMessage(message),
-        );
-        this.centrifugeClient.on("reward", (data) => this.onReward(data));
-        this.centrifugeClient.on("channel-info", (data) =>
-            this.onChannelInfo(data),
-        );
-        this.centrifugeClient.on("stream-status", (data) =>
-            this.onStreamStatus(data),
+            this.onCentrifugoMessage(message),
         );
         this.centrifugeClient.on("reconnect", () => this.onReconnect());
     }
@@ -133,6 +138,78 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         };
 
         this.emit("refresh-token", ctx);
+    }
+
+    private isChatMessage(
+        message: VkWsTypes.WsMessage,
+    ): message is VkWsTypes.WsMessage<VkWsTypes.ChatMessage> {
+        return message.push.pub.data.type === "message";
+    }
+
+    private isRewardMessage(
+        message: VkWsTypes.WsMessage,
+    ): message is VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage> {
+        return message.push.pub.data.type === "cp_reward_demand";
+    }
+
+    private isStreamStatusMessage(
+        message: VkWsTypes.WsMessage,
+    ): message is VkWsTypes.WsMessage<VkWsTypes.StreamStatus> {
+        return (
+            message.push.pub.data.type === "stream_start" ||
+            message.push.pub.data.type === "stream_end"
+        );
+    }
+
+    private isChannelInfoMessage(
+        message: VkWsTypes.WsMessage,
+    ): message is VkWsTypes.WsMessage<VkWsTypes.ChannelInfo> {
+        return message.push.pub.data.type === "stream_online_status";
+    }
+
+    private isStreamLikeCounterMessage(
+        message: VkWsTypes.WsMessage,
+    ): message is VkWsTypes.WsMessage<VkWsTypes.StreamLikeCounter> {
+        return message.push.pub.data.type === "stream_like_counter";
+    }
+
+    private isFollower(
+        message: VkWsTypes.WsMessage,
+    ): message is VkWsTypes.WsMessage<
+        VkWsTypes.ActionsJournalNewEvent<VkWsTypes.ActionsJournalFollower>
+    > {
+        return (
+            message.push.pub.data.type === "actions_journal_new_event" &&
+            message.push.pub.data.data.type === "actions_journal_follower"
+        );
+    }
+
+    private onCentrifugoMessage(message: VkWsTypes.WsMessage): void {
+        switch (true) {
+            case this.isChatMessage(message):
+                this.onMessage(message);
+                break;
+
+            case this.isRewardMessage(message):
+                this.onReward(message);
+                break;
+
+            case this.isStreamStatusMessage(message):
+                this.onStreamStatus(message);
+                break;
+
+            case this.isChannelInfoMessage(message):
+                this.onChannelInfo(message);
+                break;
+
+            case this.isStreamLikeCounterMessage(message):
+                this.onStreamLikeCounter(message);
+                break;
+
+            case this.isFollower(message):
+                this.onFollower(message);
+                break;
+        }
     }
 
     private onMessage(
@@ -180,9 +257,11 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
             api: this.api,
         };
         this.emit("message", ctx);
-        console.log(
-            `[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`,
-        );
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[chat:${channel.blogUrl}] ${mappedMessage.user.nick}: ${mappedMessage.message.text}`,
+            );
+        }
     }
 
     private onReward(
@@ -223,9 +302,12 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
             api: this.api,
         };
         this.emit("reward", ctx);
-        console.log(
-            `[reward:${channel.blogUrl}] ${reward.user.nick} reedemed reward: "${reward.reward.name}" ${reward.reward.message ? `with text "${reward.reward.message.text}"` : ""}`,
-        );
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[reward:${channel.blogUrl}] ${reward.user.nick} reedemed reward: "${reward.reward.name}" ${reward.reward.message ? `with text "${reward.reward.message.text}"` : ""}`,
+            );
+        }
     }
 
     private onChannelInfo(
@@ -254,9 +336,12 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         };
 
         this.emit("channel-info", ctx);
-        console.log(
-            `[channelInfo:${channel.blogUrl}] viewers: ${channelInfo.viewers}, isOnline: ${channelInfo.isOnline}, streamId: ${channelInfo.streamId}`,
-        );
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[channelInfo:${channel.blogUrl}] viewers: ${channelInfo.viewers}, isOnline: ${channelInfo.isOnline}, streamId: ${channelInfo.streamId}`,
+            );
+        }
     }
 
     private onStreamStatus(
@@ -285,9 +370,82 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         };
 
         this.emit("stream-status", ctx);
-        console.log(
-            `[streamStatus:${channel.blogUrl}] ${streamStatus.type}, videoId: ${streamStatus.videoId}`,
-        );
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[streamStatus:${channel.blogUrl}] ${streamStatus.type}, videoId: ${streamStatus.videoId}`,
+            );
+        }
+    }
+
+    private onStreamLikeCounter(
+        message: VkWsTypes.WsMessage<VkWsTypes.StreamLikeCounter>,
+    ): void {
+        const channelId = message.push.channel.split(":")[1];
+
+        if (!channelId) {
+            return;
+        }
+
+        const channel: VKPLClientInternal.Channel | undefined =
+            this.findChannelById(channelId);
+
+        // skip message since we are not subscribed to this channel
+        if (!channel) {
+            return;
+        }
+
+        const likesCount = message.push.pub.data;
+        const ctx: VKPLClientInternal.StreamLikeCounterEventContext<T> = {
+            ...likesCount,
+            api: this.api,
+            sendMessage: async (text: string, mentionUsers?: number[]) =>
+                this.api.sendMessage(text, channel.blogUrl as T, mentionUsers),
+        };
+
+        this.emit("stream-like-counter", ctx);
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[streamLikeCounter:${channel.blogUrl}] userId: ${likesCount.userId}, counter: ${likesCount.counter}`,
+            );
+        }
+    }
+
+    private onFollower(
+        message: VkWsTypes.WsMessage<
+            VkWsTypes.ActionsJournalNewEvent<VkWsTypes.ActionsJournalFollower>
+        >,
+    ): void {
+        const channelId = message.push.channel.split(":")[1];
+
+        if (!channelId) {
+            return;
+        }
+
+        const channel: VKPLClientInternal.Channel | undefined =
+            this.findChannelById(channelId);
+
+        // skip message since we are not subscribed to this channel
+        if (!channel) {
+            return;
+        }
+
+        const followerInfo = message.push.pub.data.data;
+        const ctx: VKPLClientInternal.FollowerEventContext<T> = {
+            ...followerInfo,
+            api: this.api,
+            sendMessage: async (text: string, mentionUsers?: number[]) =>
+                this.api.sendMessage(text, channel.blogUrl as T, mentionUsers),
+        };
+
+        this.emit("follower", ctx);
+
+        if (VKPLMessageClient.log) {
+            console.log(
+                `[follower:${channel.blogUrl}] +1 ${followerInfo.follower.displayName}`,
+            );
+        }
     }
 
     private async onReconnect(): Promise<void> {
@@ -310,7 +468,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
      * @param name - Имя канала
      *
      * Возвращает данные канала c API по имени.
-     * Поск происходит по каналам, указанным в конфиге
+     * Поиск происходит по каналам, указанным в конфиге
      */
     public findChannelByName(
         name: string,

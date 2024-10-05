@@ -6,7 +6,7 @@ import VKPLMessageClient from "../client.js";
 import { APITypes } from "../types/api.js";
 import { HTTPMethod } from "../types/http.js";
 import { VKPLClientInternal } from "../types/internal.js";
-import { DeferredPromise } from "../utils/index.js";
+import { DeferredPromise, sleep } from "../utils/index.js";
 import { VkplMessageParser } from "./VkplMessageParser.js";
 
 type VkplApiEventMap = {
@@ -15,6 +15,7 @@ type VkplApiEventMap = {
 
 export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     private refreshTokenPromise?: DeferredPromise<VKPLClientInternal.TokenAuth>;
+    private refreshTokenTimeout?: NodeJS.Timeout;
 
     constructor(
         private messageParser: VkplMessageParser,
@@ -22,6 +23,16 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         protected readonly baseUrl: string = "https://api.live.vkplay.ru/v1",
     ) {
         super();
+
+        if (auth && "refreshToken" in auth) {
+            const untilExpiration =
+                auth.expiresAt - VkplApi.tokenExpiresShift - Date.now();
+
+            this.refreshTokenTimeout = setTimeout(
+                () => this.refreshToken().catch(console.error),
+                untilExpiration,
+            );
+        }
     }
 
     protected addAuthorizationHeader(headers: Headers): void {
@@ -36,6 +47,107 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         if ("clientId" in this.auth) {
             headers.set("X-From-Id", this.auth.clientId);
         }
+    }
+
+    /**
+     * Получить закреплённое сообщение в чате
+     *
+     * @param channel - название канала
+     */
+    public async getPinMessage(channel: T): Promise<APITypes.PinMessage> {
+        const res = await this.httpRequest<APITypes.PinMessageResponse>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "GET",
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res.data.pinnedMessage;
+    }
+
+    /**
+     * Перманентно закрепляет сообщение в чате
+     *
+     * @param channel - название канала
+     * @param pinSettings - настройки закрепленного сообщения
+     */
+    public async pinMessage(
+        channel: T,
+        pinSettings: APITypes.PinSettings,
+    ): Promise<{}> {
+        const body = new URLSearchParams({
+            kind: pinSettings.kind,
+            message_id: pinSettings.messageId.toString(),
+            reactable: pinSettings.reactable.toString(),
+        });
+
+        const res = await this.httpRequest<{}>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "POST",
+            undefined,
+            body.toString(),
+            new Headers({
+                "Content-type": "application/x-www-form-urlencoded",
+            }),
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res;
+    }
+
+    /**
+     * Обновляет настройки закрплённого сообщения в чате
+     *
+     * @param channel - название канала
+     * @param pinSettings - настройки закрепленного сообщения
+     */
+    public async updatePinMessage(
+        channel: T,
+        pinSettings: Omit<APITypes.PinSettings, "messageId">,
+    ): Promise<{}> {
+        const body = new URLSearchParams({
+            kind: pinSettings.kind,
+            reactable: pinSettings.reactable.toString(),
+        });
+
+        const res = await this.httpRequest<{}>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "PUT",
+            undefined,
+            body.toString(),
+            new Headers({
+                "Content-type": "application/x-www-form-urlencoded",
+            }),
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res;
+    }
+
+    /**
+     * Удаляет закреплённое сообщение
+     *
+     * @param channel - название канала
+     */
+    public async deletePinMessage(channel: T): Promise<{}> {
+        const res = await this.httpRequest<{}>(
+            `/channel/${channel}/public_video_stream/chat/pinned_message`,
+            "DELETE",
+        );
+
+        if (typeof res === "string") {
+            throw new Error(res);
+        }
+
+        return res;
     }
 
     /**
@@ -551,7 +663,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         return parsedToken;
     }
 
-    public static readonly tokenExpiresShift = 10 * 60 * 1000; // 10 min
+    public static readonly tokenExpiresShift: number = 10 * 60 * 1000; // 10 min
 
     public isTokenExpired(): boolean {
         if (!this.auth) {
@@ -625,6 +737,15 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             this.refreshTokenPromise.resolve(token);
             this.emit("refreshed", token);
 
+            if (this.refreshTokenTimeout) {
+                clearTimeout(this.refreshTokenTimeout);
+            }
+
+            this.refreshTokenTimeout = setTimeout(
+                () => this.refreshToken().catch(console.error),
+                token.expiresAt - VkplApi.tokenExpiresShift - Date.now(),
+            );
+
             return token;
         } finally {
             this.refreshTokenPromise = undefined;
@@ -646,24 +767,56 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
 
         const url = `${this.baseUrl}${endpoint}?${new URLSearchParams(query)}`;
 
-        const response = await fetch(url, {
-            method,
-            headers,
-            body,
-        });
+        while (true) {
+            const response = await fetch(url, {
+                method,
+                headers,
+                body,
+            });
 
-        if (response.status >= 400) {
-            throw new Error(
-                `[api:${response.status}] Error in request: ${await response.text()}`,
-            );
+            if (response.status >= 400) {
+                try {
+                    const error = await response.clone().json();
+
+                    if (this.isCantSendError(error)) {
+                        const delay = Math.max(
+                            ...error.data.reasons
+                                .filter((r) => r.type === "slow_mode_cooldown")
+                                .map((r) => r.remaningTime),
+                        );
+
+                        await sleep(delay * 1000);
+                        continue;
+                    }
+                } catch {
+                    throw new Error(
+                        `[api:${response.status}] Error in request: ${await response.clone().text()}`,
+                    );
+                }
+
+                throw new Error(
+                    `[api:${response.status}] Error in request: ${await response.clone().text()}`,
+                );
+            }
+
+            if (
+                response.headers
+                    .get("Content-Type")
+                    ?.includes("application/json")
+            ) {
+                return (await response.json()) as T;
+            }
+
+            return await response.text();
         }
+    }
 
-        if (
-            response.headers.get("Content-Type")?.includes("application/json")
-        ) {
-            return (await response.json()) as T;
-        }
-
-        return await response.text();
+    private isCantSendError(error: unknown): error is APITypes.CantSendError {
+        return (
+            typeof error === "object" &&
+            error !== null &&
+            "error" in error &&
+            error.error === "cant_send"
+        );
     }
 }

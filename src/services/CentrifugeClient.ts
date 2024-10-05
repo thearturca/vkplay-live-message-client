@@ -7,11 +7,8 @@ import { VKPLClientInternal } from "../types/internal.js";
 import { VkplApi } from "./VkplApi.js";
 
 type CentrifugeClientEventMap = {
-    message: [newMessage: VkWsTypes.WsMessage<VkWsTypes.ChatMessage>];
+    message: [message: VkWsTypes.WsMessage];
     reconnect: [];
-    reward: [data: VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>];
-    "channel-info": [data: VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>];
-    "stream-status": [data: VkWsTypes.WsMessage<VkWsTypes.StreamStatus>];
 };
 
 export class CentrifugeClient<
@@ -77,7 +74,8 @@ export class CentrifugeClient<
             id: 0,
         };
 
-        await this.invokeMethod(payload);
+        const openResult = await this.invokeMethod(payload);
+        console.log("[open] Open result", JSON.stringify(openResult, null, 4));
         console.log("[open] Connected");
     }
 
@@ -99,13 +97,13 @@ export class CentrifugeClient<
             return;
         }
 
-        method.callbBack(wsMessage.result);
+        method.callbBack(wsMessage);
         this.methods.splice(methodIndex, 1);
     }
 
-    public async invokeMethod<T extends Record<string, unknown>>(
+    public async invokeMethod<T extends Record<string, unknown>, R = unknown>(
         payload: VkWsTypes.Method<T>,
-    ): Promise<unknown> {
+    ): Promise<R> {
         return new Promise((resolve, reject) => {
             this.currentMethodId += 1;
             payload.id = this.currentMethodId;
@@ -117,7 +115,10 @@ export class CentrifugeClient<
                 );
             }
 
-            this.methods.push({ id: payload.id, callbBack: resolve });
+            this.methods.push({
+                id: payload.id,
+                callbBack: resolve as vkplWsCallback<unknown>,
+            });
             this.socket?.send(JSON.stringify(payload), (error) => {
                 if (error) {
                     reject(error);
@@ -199,48 +200,38 @@ export class CentrifugeClient<
             );
         }
 
-        if ("id" in data) {
-            this.resolveMethod(data as VkWsTypes.WsMethodResponse<{}>);
+        if (this.isWsMethod(data)) {
+            this.resolveMethod(data);
         }
 
-        const chatMessage = data as VkWsTypes.WsMessage<VkWsTypes.ChatMessage>;
-
-        if (
-            chatMessage.push?.pub.data &&
-            chatMessage.push?.pub?.data.type === "message"
-        ) {
-            this.emit("message", chatMessage);
+        if (this.isWsMessage(data)) {
+            this.emit("message", data);
         }
+    }
 
-        const rewardMessage =
-            data as VkWsTypes.WsMessage<VkWsTypes.CpRewardDemandMessage>;
+    private isWsMethod(
+        message: unknown,
+    ): message is VkWsTypes.WsMethodResponse<{}> {
+        return (
+            typeof message === "object" && message !== null && "id" in message
+        );
+    }
 
-        if (
-            rewardMessage.push?.pub &&
-            rewardMessage.push?.pub?.data.type === "cp_reward_demand"
-        ) {
-            this.emit("reward", rewardMessage);
-        }
-
-        const channelInfo = data as VkWsTypes.WsMessage<VkWsTypes.ChannelInfo>;
-
-        if (
-            channelInfo.push?.pub &&
-            channelInfo.push?.pub?.data.type === "stream_online_status"
-        ) {
-            this.emit("channel-info", channelInfo);
-        }
-
-        const streamStatus =
-            data as VkWsTypes.WsMessage<VkWsTypes.StreamStatus>;
-
-        if (
-            streamStatus.push?.pub &&
-            (streamStatus.push?.pub?.data.type === "stream_end" ||
-                streamStatus.push?.pub?.data.type === "stream_start")
-        ) {
-            this.emit("stream-status", streamStatus);
-        }
+    private isWsMessage(message: unknown): message is VkWsTypes.WsMessage {
+        return (
+            typeof message === "object" &&
+            message !== null &&
+            "push" in message &&
+            typeof message.push === "object" &&
+            message.push !== null &&
+            "pub" in message.push &&
+            typeof message.push.pub === "object" &&
+            message.push.pub !== null &&
+            "data" in message.push.pub &&
+            typeof message.push.pub.data === "object" &&
+            message.push.pub.data !== null &&
+            "type" in message.push.pub.data
+        );
     }
 
     public async onClose(event: WebSocket.CloseEvent): Promise<void> {
