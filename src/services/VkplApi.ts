@@ -26,7 +26,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
 
         if (auth && "refreshToken" in auth) {
             const untilExpiration =
-                Date.now() - (auth.expiresAt - VkplApi.tokenExpiresShift);
+                auth.expiresAt - VkplApi.tokenExpiresShift - Date.now();
 
             this.refreshTokenTimeout = setTimeout(
                 () => this.refreshToken().catch(console.error),
@@ -642,7 +642,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
 
             this.refreshTokenTimeout = setTimeout(
                 () => this.refreshToken().catch(console.error),
-                Date.now() - (token.expiresAt - VkplApi.tokenExpiresShift),
+                token.expiresAt - VkplApi.tokenExpiresShift - Date.now(),
             );
 
             return token;
@@ -674,7 +674,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             });
 
             if (response.status >= 400) {
-                const error = await response.json();
+                const error = await response.clone().json();
 
                 if (this.isCantSendError(error)) {
                     const delay = Math.max(
