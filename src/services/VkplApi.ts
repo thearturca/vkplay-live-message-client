@@ -6,7 +6,7 @@ import VKPLMessageClient from "../client.js";
 import { APITypes } from "../types/api.js";
 import { HTTPMethod } from "../types/http.js";
 import { VKPLClientInternal } from "../types/internal.js";
-import { DeferredPromise } from "../utils/index.js";
+import { DeferredPromise, sleep } from "../utils/index.js";
 import { VkplMessageParser } from "./VkplMessageParser.js";
 
 type VkplApiEventMap = {
@@ -15,6 +15,7 @@ type VkplApiEventMap = {
 
 export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     private refreshTokenPromise?: DeferredPromise<VKPLClientInternal.TokenAuth>;
+    private refreshTokenTimeout?: NodeJS.Timeout;
 
     constructor(
         private messageParser: VkplMessageParser,
@@ -22,6 +23,16 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         protected readonly baseUrl: string = "https://api.live.vkplay.ru/v1",
     ) {
         super();
+
+        if (auth && "refreshToken" in auth) {
+            const untilExpiration =
+                Date.now() - (auth.expiresAt - VkplApi.tokenExpiresShift);
+
+            this.refreshTokenTimeout = setTimeout(
+                () => this.refreshToken().catch(console.error),
+                untilExpiration,
+            );
+        }
     }
 
     protected addAuthorizationHeader(headers: Headers): void {
@@ -551,7 +562,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         return parsedToken;
     }
 
-    public static readonly tokenExpiresShift = 10 * 60 * 1000; // 10 min
+    public static readonly tokenExpiresShift: number = 10 * 60 * 1000; // 10 min
 
     public isTokenExpired(): boolean {
         if (!this.auth) {
@@ -625,6 +636,15 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             this.refreshTokenPromise.resolve(token);
             this.emit("refreshed", token);
 
+            if (this.refreshTokenTimeout) {
+                clearTimeout(this.refreshTokenTimeout);
+            }
+
+            this.refreshTokenTimeout = setTimeout(
+                () => this.refreshToken().catch(console.error),
+                Date.now() - (token.expiresAt - VkplApi.tokenExpiresShift),
+            );
+
             return token;
         } finally {
             this.refreshTokenPromise = undefined;
@@ -646,24 +666,49 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
 
         const url = `${this.baseUrl}${endpoint}?${new URLSearchParams(query)}`;
 
-        const response = await fetch(url, {
-            method,
-            headers,
-            body,
-        });
+        while (true) {
+            const response = await fetch(url, {
+                method,
+                headers,
+                body,
+            });
 
-        if (response.status >= 400) {
-            throw new Error(
-                `[api:${response.status}] Error in request: ${await response.text()}`,
-            );
+            if (response.status >= 400) {
+                const error = await response.json();
+
+                if (this.isCantSendError(error)) {
+                    const delay = Math.max(
+                        ...error.data.reasons
+                            .filter((r) => r.type === "slow_mode_cooldown")
+                            .map((r) => r.remaningTime),
+                    );
+
+                    await sleep(delay * 1000);
+                    continue;
+                }
+                throw new Error(
+                    `[api:${response.status}] Error in request: ${await response.clone().text()}`,
+                );
+            }
+
+            if (
+                response.headers
+                    .get("Content-Type")
+                    ?.includes("application/json")
+            ) {
+                return (await response.json()) as T;
+            }
+
+            return await response.text();
         }
+    }
 
-        if (
-            response.headers.get("Content-Type")?.includes("application/json")
-        ) {
-            return (await response.json()) as T;
-        }
-
-        return await response.text();
+    private isCantSendError(error: unknown): error is APITypes.CantSendError {
+        return (
+            typeof error === "object" &&
+            error !== null &&
+            "error" in error &&
+            error.error === "cant_send"
+        );
     }
 }

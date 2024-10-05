@@ -286,4 +286,14 @@ export namespace APITypes {
         type: CategoryType;
         limit: number;
     };
+
+    export type CantSendError = {
+        error: "cant_send";
+        data: {
+            reasons: {
+                type: "slow_mode_cooldown";
+                remaningTime: number;
+            }[];
+        };
+    };
 }
