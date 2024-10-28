@@ -26,7 +26,7 @@ importers:
     devDependencies:
       '@thearturca/shared-configs':
         specifier: ^1.0.1
-        version: 1.1.0(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.10.3)(prettier@3.3.3)(typescript@5.6.2)
+        version: 1.1.0(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.10.3)(prettier@3.3.3)(typescript@5.6.3)
       '@types/node':
         specifier: ^20.16.1
         version: 20.16.1
@@ -53,7 +53,7 @@ importers:
         version: 6.0.1
       typescript:
         specifier: ^5.5.4
-        version: 5.6.2
+        version: 5.6.3
       vitest:
         specifier: ^2.0.5
         version: 2.1.2(@types/node@20.16.1)
@@ -1166,8 +1166,8 @@ packages:
   tslib@2.6.3:
     resolution: {integrity: sha512-xNvxJEOUiWPGhUuUdQgAJPKOOJfGnIyKySOc09XkKsgdUV/3E2zvwZYdejjmRgPCgcym1juLH3226yA7sEFJKQ==}
 
-  typescript@5.6.2:
-    resolution: {integrity: sha512-NW8ByodCSNCwZeghjN3o+JX5OFH0Ojg6sadjEKY4huZ52TqbJTJnDo5+Tw98lSy63NZvi4n+ez5m2u5d4PkZyw==}
+  typescript@5.6.3:
+    resolution: {integrity: sha512-hjcS1mhfuyi4WW8IWtjP7brDrG2cuDZukyrYrSauoXGNgx0S7zceP07adYkJycEr56BOUTNPzbInooiN3fn1qw==}
     engines: {node: '>=14.17'}
     hasBin: true
 
@@ -1612,14 +1612,14 @@ snapshots:
   '@rollup/rollup-win32-x64-msvc@4.21.0':
     optional: true
 
-  '@thearturca/shared-configs@1.1.0(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.10.3)(prettier@3.3.3)(typescript@5.6.2)':
+  '@thearturca/shared-configs@1.1.0(@ianvs/prettier-plugin-sort-imports@4.1.1(prettier@3.3.3))(oxlint@0.10.3)(prettier@3.3.3)(typescript@5.6.3)':
     dependencies:
       '@ianvs/prettier-plugin-sort-imports': 4.1.1(prettier@3.3.3)
       prettier-plugin-packagejson: 2.5.1(prettier@3.3.3)
     optionalDependencies:
       oxlint: 0.10.3
       prettier: 3.3.3
-      typescript: 5.6.2
+      typescript: 5.6.3
 
   '@types/estree@1.0.5': {}
 
@@ -2313,7 +2313,7 @@ snapshots:
 
   tslib@2.6.3: {}
 
-  typescript@5.6.2: {}
+  typescript@5.6.3: {}
 
   undefsafe@2.0.5: {}
 
