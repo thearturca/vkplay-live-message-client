@@ -27,9 +27,7 @@ export class CentrifugeClient<
 
     public connect(): Promise<void> {
         return new Promise((resolve, reject) => {
-            if (this.socket) {
-                this.socket.close();
-            }
+            this.disconnect();
 
             this.socket = new WebSocket(this.wsServerUrl, {
                 headers: { Origin: "https://live.vkplay.ru" },
@@ -39,6 +37,16 @@ export class CentrifugeClient<
                 await this.onOpen(e).catch(reject);
                 resolve();
             };
+            this.socket.on("message", (data) => {
+                if (data.toString("utf8") === "{}") {
+                    this.socket?.send("{}", (error) => {
+                        if (error) {
+                            console.error("[error:websocket]", error);
+                        }
+                    });
+                    return;
+                }
+            });
             this.socket.onmessage = (e): void => this.onMessage(e);
             this.socket.onclose = (e): Promise<void> => this.onClose(e);
             this.socket.onerror = (e): void => this.onError(e);
@@ -180,7 +188,6 @@ export class CentrifugeClient<
 
     public onMessage(event: WebSocket.MessageEvent): void {
         if (event.data === "{}") {
-            this.socket?.send("{}");
             return;
         }
 
