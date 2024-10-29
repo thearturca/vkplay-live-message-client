@@ -37,7 +37,7 @@ type VKPLMessageClientEventMap<Channel extends string> = {
     "stream-like-counter": VKPLClientInternal.StreamLikeCounterEvent<Channel>;
 
     /*
-     * Событие о получении нового подписчика
+     * Событие о получении нового фолловера
      */
     follower: VKPLClientInternal.FollowerEvent<Channel>;
 };
