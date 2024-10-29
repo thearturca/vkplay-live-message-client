@@ -117,7 +117,9 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
         this.api = new VkplApi(this.messageParser, this.auth);
         this.api.on("refreshed", (token) => this.onRefreshToken(token));
         this.channelNames = config.channels;
-        this.wsServerUrl = config.wsServer ?? this.wsServerUrl;
+        this.wsServerUrl = config.wsServer
+            ? `${config.wsServer}?cf_protocol_version=v2`
+            : this.wsServerUrl;
         this.centrifugeClient = new CentrifugeClient(
             this.wsServerUrl,
             this.api,
