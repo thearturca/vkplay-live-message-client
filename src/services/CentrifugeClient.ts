@@ -246,6 +246,13 @@ export class CentrifugeClient<
             console.log(
                 `[close] Connection closed clean, code=${event.code} reason=${event.reason}`,
             );
+
+            if (event.reason === "no pong") {
+                console.log("[close] Reason: no pong");
+                console.log("[close] Trying to reconnect...");
+                await this.connect();
+                this.emit("reconnect");
+            }
         } else {
             console.error("[close] Connection interrupted");
             console.log("[close] Trying to reconnect...");
