@@ -70,6 +70,8 @@ export class MapApiToClient {
             isPrivate: message.data.isPrivate,
             message: VkplMessageParser.deserialize(message.data.data),
             parent: parentMessage,
+            flags: message.data.flags,
+            threadId: message.data.threadId,
         };
     }
 }

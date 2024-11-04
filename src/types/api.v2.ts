@@ -129,15 +129,22 @@ export namespace VkWsTypes {
         | MessageBlockMention
         | MessageBlockLink;
 
+    export type MessageFlags = {
+        isFirstMessage: boolean;
+        isParentDeleted: boolean;
+    };
+
     export type MessageData = {
         author: Author;
         createdAt: number;
         data: ChatMessageBlock[];
         id: number;
-        style: unknown[];
+        styles: unknown[];
         user: ChatUser;
         isPrivate: boolean;
         parent?: ParentMessage;
+        threadId: string | null;
+        flags: MessageFlags;
     };
 
     export type ChatMessage = {

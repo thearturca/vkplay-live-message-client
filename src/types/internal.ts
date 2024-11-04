@@ -60,6 +60,8 @@ export namespace VKPLClientInternal {
         createdAt: number;
         id: number;
         isPrivate: boolean;
+        flags: VkWsTypes.MessageFlags;
+        threadId: string | null;
     };
 
     export type DeserializedMessage = {
