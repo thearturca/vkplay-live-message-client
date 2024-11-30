@@ -20,7 +20,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     constructor(
         private messageParser: VkplMessageParser,
         public auth?: VKPLClientInternal.TokenAuth,
-        protected readonly baseUrl: string = "https://api.live.vkplay.ru/v1",
+        protected readonly baseUrl: string = "https://api.live.vkvideo.ru/v1",
     ) {
         super();
 
@@ -485,7 +485,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
     }
 
     /**
-     * Получает список категорий, доступных на live.vkplay.ru
+     * Получает список категорий, доступных на live.vkvideo.ru
      *
      * @param filters - Фильтры. Если не указывать фильтры, то возвращает список из всех категорий
      * @return {Promise<APITypes.CategoryResponse>} Ответ API
@@ -609,12 +609,12 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             password: password,
         });
 
-        let res = await fetch("https://auth-ac.vkplay.ru/sign_in", {
+        let res = await fetch("https://auth-ac.vkvideo.ru/sign_in", {
             method: "POST",
             headers: {
                 "Content-Type": "application/x-www-form-urlencoded",
-                origin: "https://account.vkplay.ru",
-                referer: "https://account.vkplay.ru",
+                origin: "https://account.vkvideo.ru",
+                referer: "https://account.vkvideo.ru",
             },
             body: body.toString(),
             dispatcher: agent,
@@ -625,13 +625,13 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
         }
 
         res = await fetch(
-            "https://account.vkplay.ru/oauth2/?redirect_uri=" +
-                "https%3A%2F%2Flive.vkplay.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1",
+            "https://account.vkvideo.ru/oauth2/?redirect_uri=" +
+                "https%3A%2F%2Flive.vkvideo.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1",
             {
                 method: "GET",
                 headers: {
-                    origin: "https://account.vkplay.ru",
-                    referer: "https://account.vkplay.ru",
+                    origin: "https://account.vkvideo.ru",
+                    referer: "https://account.vkvideo.ru",
                 },
                 dispatcher: agent,
             },
@@ -641,7 +641,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             throw new Error("[api] Cannot get token");
         }
 
-        res = await fetch("https://live.vkplay.ru", {
+        res = await fetch("https://live.vkvideo.ru", {
             dispatcher: agent,
         });
 
@@ -649,7 +649,7 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             throw new Error("[api] Cannot get token");
         }
 
-        const cookies = await jar.getCookies("https://live.vkplay.ru");
+        const cookies = await jar.getCookies("https://live.vkvideo.ru");
         const tokenCookie = cookies.find((c) => c.key === "auth");
 
         if (!tokenCookie) {
@@ -702,17 +702,20 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
                 device_os: "streams_web",
             });
 
-            const res = await fetch("https://api.live.vkplay.ru/oauth/token/", {
-                method: "POST",
-                body: body.toString(),
-                headers: {
-                    "Content-Type": "application/x-www-form-urlencoded",
-                    origin: "https://live.vkplay.ru",
-                    referer: "https://live.vkplay.ru",
-                    "User-Agent":
-                        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+            const res = await fetch(
+                "https://api.live.vkvideo.ru/oauth/token/",
+                {
+                    method: "POST",
+                    body: body.toString(),
+                    headers: {
+                        "Content-Type": "application/x-www-form-urlencoded",
+                        origin: "https://live.vkvideo.ru",
+                        referer: "https://live.vkvideo.ru",
+                        "User-Agent":
+                            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/127.0.0.0 Safari/537.36",
+                    },
                 },
-            });
+            );
 
             if (!res.ok)
                 throw new Error("[api] Cannot refresh token", {

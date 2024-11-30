@@ -67,7 +67,7 @@ class VKPLMessageClient<T extends string> extends EventEmitter<
     VKPLMessageClientEventMap<T>
 > {
     private wsServerUrl: string =
-        "wss://pubsub.live.vkplay.ru/connection/websocket?cf_protocol_version=v2";
+        "wss://pubsub.live.vkvideo.ru/connection/websocket?cf_protocol_version=v2";
 
     private auth?: VKPLClientInternal.TokenAuth;
     private credentials?: VKPLClientInternal.LoginAuth;

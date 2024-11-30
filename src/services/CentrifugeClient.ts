@@ -30,7 +30,7 @@ export class CentrifugeClient<
             this.disconnect();
 
             this.socket = new WebSocket(this.wsServerUrl, {
-                headers: { Origin: "https://live.vkplay.ru" },
+                headers: { Origin: "https://live.vkvideo.ru" },
             });
 
             this.socket.onopen = async (e): Promise<void> => {
@@ -62,7 +62,7 @@ export class CentrifugeClient<
 
     public async onOpen(_: WebSocket.Event): Promise<void> {
         console.log(
-            "[open] Initializing connection to live.vkplay.ru websocket",
+            "[open] Initializing connection to live.vkvideo.ru websocket",
         );
 
         const wsToken = await this.api.getWebSocketConnectToken();
@@ -118,7 +118,7 @@ export class CentrifugeClient<
 
             if (VKPLMessageClient.debugLog) {
                 console.warn(
-                    "[debug:websocket] invoking live.vkplay.ru websocket method",
+                    "[debug:websocket] invoking live.vkvideo.ru websocket method",
                     JSON.stringify(payload, null, 4),
                 );
             }
