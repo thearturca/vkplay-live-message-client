@@ -46,24 +46,25 @@
     "prettier": "@thearturca/shared-configs/prettier",
     "dependencies": {
         "eventemitter3": "^5.0.1",
-        "http-cookie-agent": "^6.0.5",
-        "tough-cookie": "^4.1.4",
-        "undici": "^6.19.8",
+        "http-cookie-agent": "^6.0.8",
+        "tough-cookie": "^5.1.1",
+        "undici": "^7.3.0",
         "ws": "^8.18.0"
     },
     "devDependencies": {
-        "@thearturca/shared-configs": "^1.0.1",
-        "@types/node": "^22.13.0",
+        "@thearturca/shared-configs": "^1.1.0",
+        "@types/node": "^22.13.1",
         "@types/tough-cookie": "^4.0.5",
-        "@types/ws": "^8.5.12",
-        "husky": "^9.1.5",
-        "lint-staged": "^15.2.9",
-        "nodemon": "^3.1.4",
-        "oxlint": "^0.15.9",
+        "@types/ws": "^8.5.14",
+        "husky": "^9.1.7",
+        "lint-staged": "^15.4.3",
+        "nodemon": "^3.1.9",
+        "oxlint": "^0.15.10",
         "rimraf": "^6.0.1",
-        "typescript": "^5.5.4",
-        "vitest": "^2.0.5"
+        "typescript": "^5.7.3",
+        "vitest": "^3.0.5"
     },
+    "packageManager": "pnpm@9.7.0+sha512.dc09430156b427f5ecfc79888899e1c39d2d690f004be70e05230b72cb173d96839587545d09429b55ac3c429c801b4dc3c0e002f653830a420fa2dd4e3cf9cf",
     "publishConfig": {
         "access": "public",
         "registry": "https://registry.npmjs.org/"

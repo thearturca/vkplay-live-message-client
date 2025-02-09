@@ -1,6 +1,4 @@
 import { EventEmitter } from "eventemitter3";
-import { CookieAgent } from "http-cookie-agent/undici";
-import { CookieJar } from "tough-cookie";
 
 import VKPLMessageClient from "../client.js";
 import { APITypes } from "../types/api.js";
@@ -599,68 +597,71 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
      * При попытке использовать эту функцию, будет выдана ошибка.
      */
     public static async login(
-        username: string,
-        password: string,
+        _username: string,
+        _password: string,
     ): Promise<APITypes.AuthResponse> {
-        const jar = new CookieJar();
-        const agent = new CookieAgent({ cookies: { jar } });
-        const body = new URLSearchParams({
-            login: username,
-            password: password,
-        });
-
-        let res = await fetch("https://auth-ac.vkvideo.ru/sign_in", {
-            method: "POST",
-            headers: {
-                "Content-Type": "application/x-www-form-urlencoded",
-                origin: "https://account.vkvideo.ru",
-                referer: "https://account.vkvideo.ru",
-            },
-            body: body.toString(),
-            dispatcher: agent,
-        });
-
-        if (!res.ok) {
-            throw new Error("[api] Cannot get token");
-        }
-
-        res = await fetch(
-            "https://account.vkvideo.ru/oauth2/?redirect_uri=" +
-                "https%3A%2F%2Flive.vkvideo.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1",
-            {
-                method: "GET",
-                headers: {
-                    origin: "https://account.vkvideo.ru",
-                    referer: "https://account.vkvideo.ru",
-                },
-                dispatcher: agent,
-            },
+        throw new Error(
+            "VkplApi.login() is deprecated. Please use accessToken instead.",
         );
-
-        if (!res.ok) {
-            throw new Error("[api] Cannot get token");
-        }
-
-        res = await fetch("https://live.vkvideo.ru", {
-            dispatcher: agent,
-        });
-
-        if (!res.ok) {
-            throw new Error("[api] Cannot get token");
-        }
-
-        const cookies = await jar.getCookies("https://live.vkvideo.ru");
-        const tokenCookie = cookies.find((c) => c.key === "auth");
-
-        if (!tokenCookie) {
-            throw new Error("[api] Cannot get token cookie");
-        }
-
-        const parsedToken = JSON.parse(
-            decodeURIComponent(tokenCookie.value),
-        ) as APITypes.AuthResponse;
-
-        return parsedToken;
+        // const jar = new CookieJar();
+        // const agent = new CookieAgent({ cookies: { jar } });
+        // const body = new URLSearchParams({
+        //     login: username,
+        //     password: password,
+        // });
+        //
+        // let res = await fetch("https://auth-ac.vkvideo.ru/sign_in", {
+        //     method: "POST",
+        //     headers: {
+        //         "Content-Type": "application/x-www-form-urlencoded",
+        //         origin: "https://account.vkvideo.ru",
+        //         referer: "https://account.vkvideo.ru",
+        //     },
+        //     body: body.toString(),
+        //     dispatcher: agent,
+        // });
+        //
+        // if (!res.ok) {
+        //     throw new Error("[api] Cannot get token");
+        // }
+        //
+        // res = await fetch(
+        //     "https://account.vkvideo.ru/oauth2/?redirect_uri=" +
+        //         "https%3A%2F%2Flive.vkvideo.ru%2Fapp%2Foauth_redirect_vkplay&client_id=vkplay.live&response_type=code&skip_grants=1",
+        //     {
+        //         method: "GET",
+        //         headers: {
+        //             origin: "https://account.vkvideo.ru",
+        //             referer: "https://account.vkvideo.ru",
+        //         },
+        //         dispatcher: agent,
+        //     },
+        // );
+        //
+        // if (!res.ok) {
+        //     throw new Error("[api] Cannot get token");
+        // }
+        //
+        // res = await fetch("https://live.vkvideo.ru", {
+        //     dispatcher: agent,
+        // });
+        //
+        // if (!res.ok) {
+        //     throw new Error("[api] Cannot get token");
+        // }
+        //
+        // const cookies = await jar.getCookies("https://live.vkvideo.ru");
+        // const tokenCookie = cookies.find((c) => c.key === "auth");
+        //
+        // if (!tokenCookie) {
+        //     throw new Error("[api] Cannot get token cookie");
+        // }
+        //
+        // const parsedToken = JSON.parse(
+        //     decodeURIComponent(tokenCookie.value),
+        // ) as APITypes.AuthResponse;
+        //
+        // return parsedToken;
     }
 
     public static readonly tokenExpiresShift: number = 10 * 60 * 1000; // 10 min
@@ -718,9 +719,9 @@ export class VkplApi<T extends string> extends EventEmitter<VkplApiEventMap> {
             );
 
             if (!res.ok)
-                throw new Error("[api] Cannot refresh token", {
-                    cause: await res.text(),
-                });
+                throw new Error(
+                    `[api] Cannot refresh token: ${await res.text()}`,
+                );
 
             const refreshedToken =
                 (await res.json()) as APITypes.RefreshedTokenResponse;

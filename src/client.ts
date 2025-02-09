@@ -524,6 +524,10 @@ Connect to reward channel will be skipped`);
         }
     }
 
+    private isAuthReadOnly(): boolean {
+        return this.config.auth === "readonly" || !this.config.auth;
+    }
+
     /**
      * Подключает бота к каналам, которые были переданы в конфиг
      * Необходимо вызвать этот метод, если вы хотите, чтобы бот получал сообщения
@@ -541,7 +545,7 @@ Connect to reward channel will be skipped`);
             this.channels.push(channel);
         }
 
-        if (this.config.auth !== "readonly") {
+        if (!this.isAuthReadOnly()) {
             await this.populateMessageParserWithSmiles();
         }
 
@@ -598,7 +602,7 @@ Connect to reward channel will be skipped`);
         mentionUserId?: number[],
         threadId?: number,
     ): Promise<APITypes.TMessageResponse> {
-        if (!this.config.auth || this.config.auth === "readonly") {
+        if (this.isAuthReadOnly()) {
             throw new Error(
                 "You must provide auth token or credentials. Current mode is readonly",
             );

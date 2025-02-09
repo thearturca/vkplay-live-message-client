@@ -185,8 +185,8 @@ await client.connect(); // После подключения все сообще
 
 В боте есть возможность вставки ссылок в текст сообщения. Доступно 2 формата ссылок:
 
--   Прямая ссылка. Пример: `https://github.com/thearturca/vkplay-live-message-client`
--   Ссылка в стиле markdown. Пример: `[Ссылка](https://github.com/thearturca/vkplay-live-message-client)`
+- Прямая ссылка. Пример: `https://github.com/thearturca/vkplay-live-message-client`
+- Ссылка в стиле markdown. Пример: `[Ссылка](https://github.com/thearturca/vkplay-live-message-client)`
 
 Ссылка в стиле markdown будет выглядеть следующим образом:
 

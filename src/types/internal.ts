@@ -32,7 +32,7 @@ export namespace VKPLClientInternal {
 
     export type Config<T extends string> = {
         channels: T[];
-        auth: Auth;
+        auth?: Auth;
         wsServer?: string;
         debugLog?: boolean;
         log?: boolean;
