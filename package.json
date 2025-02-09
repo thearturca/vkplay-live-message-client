@@ -47,7 +47,7 @@
     "dependencies": {
         "eventemitter3": "^5.0.1",
         "http-cookie-agent": "^6.0.5",
-        "tough-cookie": "^4.1.4",
+        "tough-cookie": "^5.1.1",
         "undici": "^6.19.8",
         "ws": "^8.18.0"
     },
